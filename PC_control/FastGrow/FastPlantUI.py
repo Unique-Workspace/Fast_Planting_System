@@ -14,7 +14,7 @@ import wx.xrc
 ## Class SerialFrameUI
 ###########################################################################
 
-class FastGrowUI ( wx.Frame ):
+class FastPlantUI ( wx.Frame ):
     
     def __init__( self, parent ):
         wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = wx.EmptyString, pos = wx.DefaultPosition, size = wx.Size( 574,456 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )

@@ -4,10 +4,10 @@ import wx
 import wx.xrc
 from serial import Serial
 from wx.lib.pubsub import pub
-from FastGrowUI import FastGrowUI
+import FastPlantUI.FastPlantUI
 
 
-class SerialFrame(FastGrowUI):
+class SerialFrame(FastPlantUI):
     def __init__(self,parent=None):
         super(SerialFrame,self).__init__(parent)
         
