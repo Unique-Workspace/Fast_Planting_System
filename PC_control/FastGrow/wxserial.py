@@ -4,7 +4,7 @@ import wx
 import wx.xrc
 from serial import Serial
 from wx.lib.pubsub import pub
-import FastPlantUI.FastPlantUI
+from FastPlantUI import FastPlantUI
 
 
 class SerialFrame(FastPlantUI):
@@ -13,12 +13,12 @@ class SerialFrame(FastPlantUI):
         
         self.m_imgStat.SetBitmap(Img_inclosing.getBitmap())
         
-        self.Ser = Serial()
-        self.serialThread = SerialThread(self.Ser)
-        
         #create a pubsub receiver
         Publisher = pub.Publisher()
         Publisher.subscribe(self.on_txtMain_update,'update')    
+        
+        self.Ser = Serial()
+        self.serialThread = SerialThread(self.Ser, Publisher) 
         
     def on_txtMain_update(self, msg):
         self.m_txtMain.AppendText(msg.data)
@@ -77,19 +77,19 @@ import threading
 
 class SerialThread(threading.Thread):
 	
-    def __init__(self,Ser):
+    def __init__(self,Ser, Publish):
         super(SerialThread,self).__init__()
         
         self.Ser=Ser
-        
+        self.Publisher = Publish
         self.start()
     
     def run(self):
-    	Publisher = pub.Publisher()
+    	#Publisher = pub.Publisher()
         while True:            
             if self.Ser.isOpen() and self.Ser.inWaiting():
                 text = self.Ser.read(self.Ser.inWaiting())
-                wx.CallAfter(Publisher.sendMessage('update',text))
+                wx.CallAfter(self.Publisher.sendMessage('update',text))
                 
             time.sleep(0.01)
                             
@@ -97,6 +97,7 @@ class SerialThread(threading.Thread):
 
 from wx.lib import embeddedimage
 
+# Generate the picture code: >img2py -n wxPython pic1.JPG image.py
 Img_inclosing = embeddedimage.PyEmbeddedImage(
     "iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAIAAAAC64paAAAAAXNSR0IArs4c6QAAAARnQU1B"
     "AACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAABiSURBVDhPY/iPDTBgAOzK0EQxtSGL"

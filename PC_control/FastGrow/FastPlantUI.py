@@ -16,8 +16,8 @@ import wx.xrc
 
 class FastPlantUI ( wx.Frame ):
     
-    def __init__( self, parent ):
-        wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = wx.EmptyString, pos = wx.DefaultPosition, size = wx.Size( 574,456 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
+    def __init__( self, parent):
+        wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u'FastPlanting', pos = wx.DefaultPosition, size = wx.Size( 574,456 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
         
         self.SetSizeHintsSz( wx.DefaultSize, wx.DefaultSize )
         self.SetForegroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_INFOBK ) )
