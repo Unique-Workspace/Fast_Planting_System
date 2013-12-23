@@ -24,7 +24,9 @@ class SerialFrame(FastPlantUI):
         self.m_txtMain.AppendText(msg.data)
     
     def on_btnSend_clicked( self, event ):
-        self.Ser.write(self.m_txtInput.GetValue())
+        msg = self.m_txtInput.GetValue()
+        print msg
+        self.Ser.write(msg)
         
     def on_btnClear_clicked( self, event ):
         self.m_txtMain.Clear()
