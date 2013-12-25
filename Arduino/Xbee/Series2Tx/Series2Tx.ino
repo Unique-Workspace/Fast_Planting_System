@@ -19,6 +19,7 @@
  */
 
 #include <XBee.h>
+#include <SoftwareSerial.h>
 
 /*
 This example is for Series 2 XBee
@@ -42,13 +43,21 @@ uint8_t payload[] = {0};
 ***/
 
 // SH + SL Address of receiving XBee
-XBeeAddress64 addr64 = XBeeAddress64(0x0013a200, 0x40b4103b);
+XBeeAddress64 addr64 = XBeeAddress64(0x0013a200, 0x40b41039);
 ZBTxRequest zbTx = ZBTxRequest(addr64, payload, sizeof(payload));
 ZBTxStatusResponse txStatus = ZBTxStatusResponse();
 
+// Define NewSoftSerial TX/RX pins
+// Connect Arduino pin 9 to TX of usb-serial device
+uint8_t ssRX = 10;
+// Connect Arduino pin 10 to RX of usb-serial device
+uint8_t ssTX = 11;
+// Remember to connect all devices to a common Ground: XBee, Arduino and USB-Serial device
+SoftwareSerial mySerial(ssRX, ssTX);
+
 int pin5 = 0;
 
-int statusLed = 10;
+int statusLed = 12;
 int errorLed = 13;
 
 void flashLed(int pin, int times, int wait) {
@@ -70,6 +79,13 @@ void setup() {
 
   Serial.begin(9600);
   xbee.setSerial(Serial);
+  
+  while (!Serial) {
+    ; // wait for serial port to connect. Needed for Leonardo only
+  }
+  // set the data rate for the SoftwareSerial port
+  mySerial.begin(9600);
+  mySerial.println("SW serial debug.");
 }
 
 void loop() {   
@@ -89,6 +105,8 @@ void loop() {
   if (xbee.readPacket(500)) {
     // got a response!
     flashLed(statusLed, 5, 50);
+    
+    mySerial.println("Got an rx packet!");
     // should be a znet tx status               
     if (xbee.getResponse().getApiId() == ZB_TX_STATUS_RESPONSE) {
       xbee.getResponse().getZBTxStatusResponse(txStatus);
