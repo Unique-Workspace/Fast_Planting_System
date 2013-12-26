@@ -29,7 +29,7 @@ This example is for Series 2 XBee
 XBee xbee = XBee();
 
 // MAX data payload: 32*7 + 19 = 243  bytes
-uint8_t payload[] = {0};
+uint8_t payload[] = {'0','1','2','3','4','5','6','7','8','9'};
 /***
 { '0','1','2','3','4','5','6','7','8','9',':',';','<','=','>','?','@','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O',
 '0','1','2','3','4','5','6','7','8','9',':',';','<','=','>','?','@','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O',
@@ -82,7 +82,7 @@ void loop() {
   xbee.send(zbTx);
 
   // flash TX indicator
-  //flashLed(statusLed, 1, 100);
+  flashLed(statusLed, 1, 100);
 
   // after sending a tx request, we expect a status response
   // wait up to half second for the status response
@@ -110,6 +110,6 @@ void loop() {
     //flashLed(errorLed, 2, 50);
   }
 
-  delay(1000);
+  delay(100);
 
 }
