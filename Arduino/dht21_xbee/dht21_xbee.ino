@@ -6,17 +6,20 @@
 #include <dht.h>
 #include <XBee.h>
 #include <SoftwareSerial.h>
+#include <stdlib.h> // for dtostrf()
 
 dht DHT;
 
 #define DHT11_PIN 2//put the sensor in the digital pin 2
-#define LENGTH 8
+#define LENGTH 20
 
 // create the XBee object
 XBee xbee = XBee();
 
 // MAX data payload: 32*7 + 19 = 243  bytes
 uint8_t payload[LENGTH];
+uint8_t str_temperature[7];
+uint8_t str_humidity[7];
 
 // SH + SL Address of receiving XBee
 XBeeAddress64 addr64 = XBeeAddress64(0x0013a200, 0x40b41039);
@@ -102,10 +105,10 @@ void setup()
 
 void loop()
 {
-
+  int i, j;
   // READ DATA
   mySerial.print("DHT21, \t");
- int chk = DHT.read22(DHT11_PIN);
+  int chk = DHT.read22(DHT11_PIN);
   switch (chk)
   {
     case 0:  mySerial.print("OK,\t"); break;
@@ -113,15 +116,26 @@ void loop()
     case -2: mySerial.print("Time out error,\t"); break;
     default: mySerial.print("Unknown error,\t"); break;
   }
- // DISPLAT DATA
+  // DISPLAT DATA
   mySerial.print(DHT.humidity,1);
   mySerial.print(",\t");
   mySerial.println(DHT.temperature,1);
   
-  payload[0]=DHT.humidity;
-  payload[1]='1';
-  payload[2]=DHT.temperature;
-  payload[3]='\n';
+  dtostrf(DHT.humidity, 3, 2, (char *)str_humidity);
+  dtostrf(DHT.temperature, 3, 2, (char *)str_temperature);
+  //mySerial.println(String((char *)str_humidity) + ", " + String((char *)str_temperature));
+  i=0;
+  payload[i++] = 'H';
+  for(j=0; i<7; i++, j++)
+  {
+    payload[i]=str_humidity[j];
+  }
+  payload[i++] = 'T';
+  for(j=0; j<7; i++,j++)
+  {
+    payload[i] = str_temperature[j];
+  }
+  //mySerial.print((char *)payload);
   xbee.send(zbTx);
   
   humidity_func(DHT.humidity);
