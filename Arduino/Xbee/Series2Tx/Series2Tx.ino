@@ -23,14 +23,13 @@
 
 /*
 This example is for Series 2 XBee
- Sends a ZB TX request with the value of analogRead(pin5) and checks the status response for success
 */
 
 // create the XBee object
 XBee xbee = XBee();
 
 // MAX data payload: 32*7 + 19 = 243  bytes
-uint8_t payload[] = {0};
+uint8_t payload[] = { '0','h','i'};
 /***
 { '0','1','2','3','4','5','6','7','8','9',':',';','<','=','>','?','@','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O',
 '0','1','2','3','4','5','6','7','8','9',':',';','<','=','>','?','@','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O',
@@ -55,28 +54,8 @@ uint8_t ssTX = 11;
 // Remember to connect all devices to a common Ground: XBee, Arduino and USB-Serial device
 SoftwareSerial mySerial(ssRX, ssTX);
 
-int pin5 = 0;
-
-int statusLed = 12;
-int errorLed = 13;
-
-void flashLed(int pin, int times, int wait) {
-
-  for (int i = 0; i < times; i++) {
-    digitalWrite(pin, HIGH);
-    delay(wait);
-    digitalWrite(pin, LOW);
-
-    if (i + 1 < times) {
-      delay(wait);
-    }
-  }
-}
 
 void setup() {
-  pinMode(statusLed, OUTPUT);
-  pinMode(errorLed, OUTPUT);
-
   Serial.begin(9600);
   xbee.setSerial(Serial);
   
@@ -90,21 +69,16 @@ void setup() {
 
 void loop() {   
   // break down 10-bit reading into two bytes and place in payload
-  //pin5 = analogRead(5);
-  //payload[0] = pin5 >> 8 & 0xff;
-  //payload[1] = pin5 & 0xff;
-  payload[0] = 'A';
+  payload[0] = '0';
   
   xbee.send(zbTx);
-
-  // flash TX indicator
-  //flashLed(statusLed, 1, 100);
+  mySerial.println("Sent an Tx packet:");
+  mySerial.println(payload[0]);
 
   // after sending a tx request, we expect a status response
   // wait up to half second for the status response
   if (xbee.readPacket(500)) {
     // got a response!
-    flashLed(statusLed, 5, 50);
     
     mySerial.println("Got an rx packet!");
     // should be a znet tx status               
@@ -114,18 +88,18 @@ void loop() {
       // get the delivery status, the fifth byte
       if (txStatus.getDeliveryStatus() == SUCCESS) {
         // success.  time to celebrate
-        //flashLed(statusLed, 5, 50);
+        mySerial.println("SUCCESS!");
       } else {
         // the remote XBee did not receive our packet. is it powered on?
-       // flashLed(errorLed, 3, 500);
+        mySerial.println("did not receive our packet!");
       }
     }
   } else if (xbee.getResponse().isError()) {
-    //nss.print("Error reading packet.  Error code: ");  
-    //nss.println(xbee.getResponse().getErrorCode());
+     mySerial.println("Error reading packet.  Error code: ");  
+     mySerial.println(xbee.getResponse().getErrorCode());
   } else {
     // local XBee did not provide a timely TX Status Response -- should not happen
-    //flashLed(errorLed, 2, 50);
+    mySerial.println("local XBee did not provide a timely TX Status Response");
   }
 
   delay(1000);
