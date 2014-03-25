@@ -123,15 +123,17 @@ void loop()
   
   dtostrf(DHT.humidity, 3, 2, (char *)str_humidity);
   dtostrf(DHT.temperature, 3, 2, (char *)str_temperature);
-  //mySerial.println(String((char *)str_humidity) + ", " + String((char *)str_temperature));
+  //mySerial.println(String((char *)str_humidity) + String((char *)str_temperature));
   i=0;
   payload[i++] = 'H';
-  for(j=0; i<7; i++, j++)
+  payload[i++] = ':';
+  for(j=0; i<7 && str_humidity[j]!=0; i++, j++)
   {
     payload[i]=str_humidity[j];
   }
   payload[i++] = 'T';
-  for(j=0; j<7; i++,j++)
+  payload[i++] = ':';
+  for(j=0; j<7 && str_temperature[j]!=0; i++,j++)
   {
     payload[i] = str_temperature[j];
   }

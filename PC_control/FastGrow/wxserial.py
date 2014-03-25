@@ -6,7 +6,6 @@ from serial import Serial
 from wx.lib.pubsub import pub
 from FastPlantUI import FastPlantUI
 
-
 class SerialFrame(FastPlantUI):
     def __init__(self,parent=None):
         super(SerialFrame,self).__init__(parent)
@@ -21,6 +20,7 @@ class SerialFrame(FastPlantUI):
         self.serialThread = SerialThread(self.Ser, Publisher) 
         
     def on_txtMain_update(self, msg):
+        #print(msg.data)
         self.m_txtMain.AppendText(msg.data)
     
     def on_btnSend_clicked( self, event ):
