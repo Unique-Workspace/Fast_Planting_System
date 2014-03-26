@@ -40,7 +40,7 @@ class SerialFrame(FastPlantUI):
         self.m_txtMain.Clear()
         self.m_txtMain.SetValue(s)
         
-    def on_cmbBaud_changled( self, event ):
+    def on_cmbBaud_changed( self, event ):
         self.Ser.setBaudrate(int(self.m_cmbBaud.GetValue()))
         
     def on_btnOpen_clicked( self, event ):

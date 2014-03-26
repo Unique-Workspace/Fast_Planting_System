@@ -1,0 +1,30 @@
+Exception in thread Thread-2:
+Traceback (most recent call last):
+  File "threading.pyc", line 810, in __bootstrap_inner
+  File "xbee\base.pyc", line 95, in run
+  File "xbee\base.pyc", line 399, in wait_read_frame
+  File "xbee\base.pyc", line 117, in _wait_for_frame
+  File "serial\serialwin32.pyc", line 239, in inWaiting
+SerialException: call to ClearCommError failed
+
+Exception in thread Thread-2:
+Traceback (most recent call last):
+  File "threading.pyc", line 810, in __bootstrap_inner
+  File "xbee\base.pyc", line 95, in run
+  File "xbee\base.pyc", line 399, in wait_read_frame
+  File "xbee\base.pyc", line 117, in _wait_for_frame
+  File "serial\serialwin32.pyc", line 239, in inWaiting
+SerialException: call to ClearCommError failed
+
+Traceback (most recent call last):
+  File "FastPlantingMain.py", line 46, in on_btnClear_clicked
+AttributeError: 'Panel' object has no attribute 'Clear'
+Exception in thread Thread-2:
+Traceback (most recent call last):
+  File "threading.pyc", line 810, in __bootstrap_inner
+  File "xbee\base.pyc", line 95, in run
+  File "xbee\base.pyc", line 399, in wait_read_frame
+  File "xbee\base.pyc", line 117, in _wait_for_frame
+  File "serial\serialwin32.pyc", line 239, in inWaiting
+SerialException: call to ClearCommError failed
+
