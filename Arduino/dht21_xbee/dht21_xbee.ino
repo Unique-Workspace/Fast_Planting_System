@@ -139,11 +139,37 @@ void loop()
   }
   //mySerial.print((char *)payload);
   xbee.send(zbTx);
-  
+
+  // after sending a tx request, we expect a status response
+  // wait up to half second for the status response
+  if (xbee.readPacket(500)) {
+    // got a response!
+    mySerial.print("got a response!\n");
+    // should be a znet tx status            	
+    if (xbee.getResponse().getApiId() == ZB_TX_STATUS_RESPONSE) {
+      xbee.getResponse().getZBTxStatusResponse(txStatus);
+
+      // get the delivery status, the fifth byte
+      if (txStatus.getDeliveryStatus() == SUCCESS) {
+        // success.  time to celebrate
+        mySerial.print("success.\n");
+      } else {
+        // the remote XBee did not receive our packet. is it powered on?
+        mySerial.print("the remote XBee did not receive our packet\n");
+      }
+    }
+  } else if (xbee.getResponse().isError()) {
+    mySerial.print("Error reading packet.  Error code: ");  
+    mySerial.println(xbee.getResponse().getErrorCode());
+  } else {
+    // local XBee did not provide a timely TX Status Response -- should not happen
+    mySerial.print("local XBee did not provide a timely TX Status Response\n");
+  }
+
   humidity_func(DHT.humidity);
   temperature_func(DHT.temperature);
 
-  delay(2000);
+  delay(1000);
 }
 //
 // END OF FILE

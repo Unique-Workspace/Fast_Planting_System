@@ -97,6 +97,5 @@ void loop() {
       nss.print("oh no!!! error code:");
       nss.println(xbee.getResponse().getErrorCode());
     }
-    //delay(100);
 }
 
