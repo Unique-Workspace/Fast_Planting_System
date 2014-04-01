@@ -17,7 +17,7 @@ import wx.xrc
 class FastPlantingUI ( wx.Frame ):
 	
 	def __init__( self, parent ):
-		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"FastPlanting", pos = wx.DefaultPosition, size = wx.Size( 500,300 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
+		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"FastPlanting", pos = wx.DefaultPosition, size = wx.Size( 550,351 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
 		
 		self.SetSizeHintsSz( wx.DefaultSize, wx.DefaultSize )
 		
@@ -31,27 +31,90 @@ class FastPlantingUI ( wx.Frame ):
 		
 		bSizer6.Add( bSizer4, 1, wx.EXPAND, 5 )
 		
+		sbSizer4 = wx.StaticBoxSizer( wx.StaticBox( self, wx.ID_ANY, u"设定范围" ), wx.VERTICAL )
+		
+		bSizer7 = wx.BoxSizer( wx.HORIZONTAL )
+		
+		self.m_staticConfigTemp = wx.StaticText( self, wx.ID_ANY, u"温度范围：", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticConfigTemp.Wrap( -1 )
+		bSizer7.Add( self.m_staticConfigTemp, 0, wx.ALL, 5 )
+		
+		self.m_txtTempMin = wx.TextCtrl( self, wx.ID_ANY, u"15.00", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_txtTempMin.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), 70, 93, 90, False, wx.EmptyString ) )
+		
+		bSizer7.Add( self.m_txtTempMin, 0, wx.ALL, 3 )
+		
+		self.m_staticText7 = wx.StaticText( self, wx.ID_ANY, u"~", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText7.Wrap( -1 )
+		bSizer7.Add( self.m_staticText7, 0, wx.ALL, 5 )
+		
+		self.m_txtTempMax = wx.TextCtrl( self, wx.ID_ANY, u"25.00", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_txtTempMax.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), 70, 93, 90, False, wx.EmptyString ) )
+		
+		bSizer7.Add( self.m_txtTempMax, 0, wx.ALL, 5 )
+		
+		
+		bSizer7.AddSpacer( ( 0, 0), 1, wx.EXPAND, 5 )
+		
+		self.m_btnTempCtrl = wx.Button( self, wx.ID_ANY, u"温度设定", wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer7.Add( self.m_btnTempCtrl, 0, wx.ALL, 5 )
+		
+		
+		sbSizer4.Add( bSizer7, 1, wx.EXPAND, 5 )
+		
+		bSizer81 = wx.BoxSizer( wx.HORIZONTAL )
+		
+		self.m_staticConfigTemp1 = wx.StaticText( self, wx.ID_ANY, u"湿度范围：", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticConfigTemp1.Wrap( -1 )
+		bSizer81.Add( self.m_staticConfigTemp1, 0, wx.ALL, 5 )
+		
+		self.m_txtHumMin = wx.TextCtrl( self, wx.ID_ANY, u"80.00", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_txtHumMin.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), 70, 93, 90, False, wx.EmptyString ) )
+		
+		bSizer81.Add( self.m_txtHumMin, 0, wx.ALL, 5 )
+		
+		self.m_staticText71 = wx.StaticText( self, wx.ID_ANY, u"~", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText71.Wrap( -1 )
+		bSizer81.Add( self.m_staticText71, 0, wx.ALL, 5 )
+		
+		self.m_txtHumMax = wx.TextCtrl( self, wx.ID_ANY, u"100.00", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_txtHumMax.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), 70, 93, 90, False, wx.EmptyString ) )
+		
+		bSizer81.Add( self.m_txtHumMax, 0, wx.ALL, 5 )
+		
+		
+		bSizer81.AddSpacer( ( 0, 0), 1, wx.EXPAND, 5 )
+		
+		self.m_btnHumCtrl = wx.Button( self, wx.ID_ANY, u"湿度设定", wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer81.Add( self.m_btnHumCtrl, 0, wx.ALL, 5 )
+		
+		
+		sbSizer4.Add( bSizer81, 1, wx.EXPAND, 5 )
+		
+		
+		bSizer6.Add( sbSizer4, 1, wx.EXPAND, 5 )
+		
 		bSizer61 = wx.BoxSizer( wx.HORIZONTAL )
 		
 		self.m_staticTxtTemp = wx.StaticText( self, wx.ID_ANY, u"温度：", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticTxtTemp.Wrap( -1 )
 		bSizer61.Add( self.m_staticTxtTemp, 0, wx.ALL, 5 )
 		
-		self.m_textTemp = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_READONLY )
+		self.m_textTemp = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_READONLY|wx.SIMPLE_BORDER )
 		bSizer61.Add( self.m_textTemp, 0, wx.ALL, 5 )
 		
 		self.m_staticTxtHum = wx.StaticText( self, wx.ID_ANY, u"    湿度：", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticTxtHum.Wrap( -1 )
 		bSizer61.Add( self.m_staticTxtHum, 0, wx.ALL, 5 )
 		
-		self.m_textHum = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_READONLY )
+		self.m_textHum = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_READONLY|wx.SIMPLE_BORDER )
 		bSizer61.Add( self.m_textHum, 0, wx.ALL, 5 )
 		
 		self.m_staticTxtTime = wx.StaticText( self, wx.ID_ANY, u"时间：", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticTxtTime.Wrap( -1 )
 		bSizer61.Add( self.m_staticTxtTime, 0, wx.ALL, 5 )
 		
-		self.m_textTime = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_READONLY )
+		self.m_textTime = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_READONLY|wx.SIMPLE_BORDER )
 		bSizer61.Add( self.m_textTime, 0, wx.ALL, 5 )
 		
 		
@@ -79,7 +142,7 @@ class FastPlantingUI ( wx.Frame ):
 		
 		bSizer8.AddSpacer( ( 0, 0), 1, wx.EXPAND, 5 )
 		
-		self.m_btnConnect = wx.Button( self, wx.ID_ANY, u"Connect", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_btnConnect = wx.Button( self, wx.ID_ANY, u"连接串口", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer8.Add( self.m_btnConnect, 0, wx.ALL, 5 )
 		
 		self.m_imgStat = wx.StaticBitmap( self, wx.ID_ANY, wx.ArtProvider.GetBitmap( wx.ART_HELP, wx.ART_BUTTON ), wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -108,6 +171,8 @@ class FastPlantingUI ( wx.Frame ):
 		self.Centre( wx.BOTH )
 		
 		# Connect Events
+		self.m_btnTempCtrl.Bind( wx.EVT_BUTTON, self.on_btnTempCtrl_clicked )
+		self.m_btnHumCtrl.Bind( wx.EVT_BUTTON, self.on_btnHumCtrl_clicked )
 		self.m_btnConnect.Bind( wx.EVT_BUTTON, self.on_btnConnect_clicked )
 		self.m_btnClear.Bind( wx.EVT_BUTTON, self.on_btnClear_clicked )
 	
@@ -116,6 +181,12 @@ class FastPlantingUI ( wx.Frame ):
 	
 	
 	# Virtual event handlers, overide them in your derived class
+	def on_btnTempCtrl_clicked( self, event ):
+		event.Skip()
+	
+	def on_btnHumCtrl_clicked( self, event ):
+		event.Skip()
+	
 	def on_btnConnect_clicked( self, event ):
 		event.Skip()
 	

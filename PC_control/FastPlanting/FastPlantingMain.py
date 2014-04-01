@@ -23,9 +23,12 @@ import sys,string
 import time
 import threading
 
+R1_ADDR_LONG = b'\x00\x13\xA2\x00\x40\xB4\x10\x3b'
+R1_ADDR_SHORT = b'\xff\xfe' 
+
+xbee_thread_exit_flag = 0
+
 class FastPlantingFrame(FastPlantingUI):
-    #port = 'COM18'
-    #baud_rate = 9600
 
     def __init__(self, parent=None):
         super(FastPlantingFrame, self).__init__(parent)
@@ -35,8 +38,20 @@ class FastPlantingFrame(FastPlantingUI):
         Publisher.subscribe(self.on_txtMain_update,'update')
 
         # Open serial port
-        self.ser = serial.Serial()
-        self.serialThread = XbeeThread(self.ser, Publisher) 
+        self.Serial = serial.Serial()
+
+        # Create API object, which spawns a new thread
+        #self.Xbee = ZigBee(self.Serial, callback=self.message_received)
+        self.Xbee = ZigBee(self.Serial)
+        
+        self.serialThread = XbeeThread(self.Serial, self.Xbee, Publisher) 
+
+    def __del__(self):
+        global xbee_thread_exit_flag
+        xbee_thread_exit_flag = 1
+        self.Xbee.halt()
+        self.Serial.close()
+        print 'FastPlantingFrame delete.'
         
     def on_txtMain_update(self, msg):
         print(msg.data)
@@ -61,41 +76,77 @@ class FastPlantingFrame(FastPlantingUI):
         self.m_txtMain.Clear()
 
     def on_cmbBaud_changed( self, event ):
-        self.ser.setBaudrate(int(self.m_cmbBaud.GetValue()))
+        self.Serial.setBaudrate(int(self.m_cmbBaud.GetValue()))
 
     def on_btnConnect_clicked( self, event ):
-        print self.ser.isOpen()
-        if not self.ser.isOpen():
+        print self.Serial.isOpen()
+        if not self.Serial.isOpen():
             try:
-                self.ser.port = self.m_comboSerial.GetValue()
-                print self.ser.port 
-                self.ser.baudrate = int(self.m_comboBaudRate.GetValue())
-                print self.ser.baudrate
-                self.ser.open()
+                self.Serial.port = self.m_comboSerial.GetValue()
+                print self.Serial.port 
+                self.Serial.baudrate = int(self.m_comboBaudRate.GetValue())
+                print self.Serial.baudrate
+                self.Serial.open()
             except Exception,e:
-                print 'COMM Open Fail!!',e
+                print '[Error]COMM Open Fail!!',e
             else:
                 self.m_btnConnect.SetLabel(u'关闭串口')
                 self.m_imgStat.SetBitmap(Img_inopening.getBitmap())
+                if self.Serial.isOpen() and self.Serial.inWaiting():
+                    print 'on_btnConnect_clicked serial is ok'
         else:
-            self.ser.close()
-            while self.ser.isOpen(): pass
+            self.Serial.close()
+            while self.Serial.isOpen(): pass
 
             self.m_btnConnect.SetLabel(u'打开串口')
             self.m_imgStat.SetBitmap(Img_inclosing.getBitmap())
 
+    def on_btnTempCtrl_clicked( self, event ):
+        strTempMin = self.m_txtTempMin.GetValue()
+        strTempMax = self.m_txtTempMax.GetValue()
+        nTempMin = float(strTempMin)
+        nTempMax = float(strTempMax)
+        if(nTempMin < 0 or nTempMin > 50):
+            print '[Error]TempMin out of range: ' + strTempMin
+            return
+        if(nTempMax < 0 or nTempMax > 50):
+            print '[Error]TempMax out of range: ' + strTempMax
+            return
+        if(nTempMax < nTempMin):
+            print '[Error]TempMax < TempMin'
+            return
 
+        # Send Tx packet
+        self.Xbee.send('tx', frame_id='A', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(nTempMin))
         
+        # Wait for response
+        response = self.Xbee.wait_read_frame()
+        print response
+            
+	
+    def on_btnHumCtrl_clicked( self, event ):
+        strHumMin = self.m_txtHumMin.GetValue()
+        strHumMax = self.m_txtHumMax.GetValue()
+        nHumMin = float(strHumMin)
+        nHumMax = float(strHumMax)
+        if(nHumMin < 0 or nHumMin > 100):
+            print '[Error]HumMin out of range: ' + strHumMin
+            return
+        if(nHumMax < 0 or nHumMax > 100):
+            print '[Error]HumMax out of range: ' + strHumMax
+            return
+        if(nHumMax < nHumMin):
+            print '[Error]HumMax < HumMin'
+            return
+
 class XbeeThread(threading.Thread):
 
-    def __init__(self, Serial, Publish):
+    def __init__(self, Serial, Xbee, Publish):
         super(XbeeThread,self).__init__()
 
         self.Serial=Serial
+        self.Xbee=Xbee
         self.Publisher = Publish
-        # Create API object, which spawns a new thread
-        #self.Xbee = ZigBee(self.Serial, callback=self.message_received)
-        self.Xbee = ZigBee(self.Serial)
         print 'XbeeThread init.'
 
         self.start()
@@ -124,18 +175,13 @@ class XbeeThread(threading.Thread):
         wx.CallAfter(self.Publisher.sendMessage('update',text))
 
     def run(self):
-        
+        global xbee_thread_exit_flag
         # Do other stuff in the main thread
-        while True:
-            try:
-                #only for testing without xbee
-                #strHum_num='61.23'
-                #strTemp_num='23.84'
-                #now_time = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
-                #text = 'Hum:' + strHum_num + ' Temp:' + strTemp_num + ' ' + now_time
-                #wx.CallAfter(self.Publisher.sendMessage('update',text))
-                    
+        while (xbee_thread_exit_flag==0) :
+            try: 
+                print 'while true'
                 if self.Serial.isOpen() and self.Serial.inWaiting():
+                    print 'serial is ok'
                     data = self.Xbee.wait_read_frame()
                     self.message_received(data)
                     
