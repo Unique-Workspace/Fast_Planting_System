@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "FastPlantingMain.py", line 109, in on_btnTempCtrl_clicked
+  File "xbee\base.pyc", line 386, in send
+  File "xbee\base.pyc", line 84, in _write
+  File "serial\serialwin32.pyc", line 279, in write
+serial.serialutil.SerialException: Attempting to use a port that is not open

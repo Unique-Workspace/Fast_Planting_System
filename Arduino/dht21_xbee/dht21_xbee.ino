@@ -26,6 +26,9 @@ XBeeAddress64 addr64 = XBeeAddress64(0x0013a200, 0x40b41039);
 ZBTxRequest zbTx = ZBTxRequest(addr64, payload, sizeof(payload));
 ZBTxStatusResponse txStatus = ZBTxStatusResponse();
 
+// create reusable response objects for responses we expect to handle 
+ZBRxResponse rx = ZBRxResponse();
+
 // Define NewSoftSerial TX/RX pins
 // Connect Arduino pin 9 to TX of usb-serial device
 uint8_t ssRX = 10;
@@ -140,6 +143,7 @@ void loop()
   //mySerial.print((char *)payload);
   xbee.send(zbTx);
 
+  delay(200);
   // after sending a tx request, we expect a status response
   // wait up to half second for the status response
   if (xbee.readPacket(500)) {
@@ -158,6 +162,39 @@ void loop()
         mySerial.print("the remote XBee did not receive our packet\n");
       }
     }
+    else if(xbee.getResponse().getApiId() == ZB_RX_RESPONSE) {
+        // got a zb rx packet
+        // now fill our zb rx class
+        xbee.getResponse().getZBRxResponse(rx);
+      
+        mySerial.println("Got an rx packet!");
+        if (rx.getOption() == ZB_PACKET_ACKNOWLEDGED) {
+            // the sender got an ACK
+            mySerial.println("packet acknowledged");
+        } else {
+          mySerial.println("packet not acknowledged");
+        }
+        
+        mySerial.print("checksum is ");
+        mySerial.println(rx.getChecksum(), HEX);
+
+        mySerial.print("packet length is ");
+        mySerial.println(rx.getPacketLength(), DEC);
+        
+         for (int i = 0; i < rx.getDataLength(); i++) {
+          mySerial.print("payload [");
+          mySerial.print(i, DEC);
+          mySerial.print("] is ");
+          mySerial.println(rx.getData()[i], HEX);
+        }
+        
+       for (int i = 0; i < xbee.getResponse().getFrameDataLength(); i++) {
+        mySerial.print("frame data [");
+        mySerial.print(i, DEC);
+        mySerial.print("] is ");
+        mySerial.println(xbee.getResponse().getFrameData()[i], HEX);
+      }
+    }
   } else if (xbee.getResponse().isError()) {
     mySerial.print("Error reading packet.  Error code: ");  
     mySerial.println(xbee.getResponse().getErrorCode());
@@ -169,7 +206,7 @@ void loop()
   humidity_func(DHT.humidity);
   temperature_func(DHT.temperature);
 
-  delay(1000);
+  delay(500);
 }
 //
 // END OF FILE
