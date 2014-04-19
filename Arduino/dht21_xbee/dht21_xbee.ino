@@ -10,7 +10,9 @@
 
 dht DHT;
 
-#define DHT11_PIN 2//put the sensor in the digital pin 2
+#define DHT11_PIN 2 //put the sensor in the digital pin 2
+#define HUMI_CTRL_PIN 3  
+#define TIME_DELAY  30
 #define LENGTH 20
 
 // create the XBee object
@@ -20,6 +22,8 @@ XBee xbee = XBee();
 uint8_t payload[LENGTH];
 uint8_t str_temperature[7];
 uint8_t str_humidity[7];
+
+uint8_t humi_delay = 0;
 
 // SH + SL Address of receiving XBee
 XBeeAddress64 addr64 = XBeeAddress64(0x0013a200, 0x40b41039);
@@ -40,20 +44,27 @@ SoftwareSerial mySerial(ssRX, ssTX);
 void humidity_func(double humidity)
 {
   //humidity conditions
-  if(humidity > 0 && humidity < 40)
+  if(humidity > 0 && humidity < 99)
   {
     // increase
-    mySerial.println("\t humidity increase");
+    mySerial.println("\t need to increase humidity");
+    digitalWrite(HUMI_CTRL_PIN, HIGH);    // trun on humidity relay control
+    humi_delay = 0;
   }
-  else if(humidity >= 40 && humidity < 80)
+  else if(humidity >= 99)
   {
     // ok
-    mySerial.println("\t humidity ok");
-  }
-  else if(humidity >= 80 && humidity < 100)
-  {
-    //decrease
-    mySerial.println("\t humidity decrease");
+    mySerial.println("\t humidity >=99");
+    if(humi_delay > TIME_DELAY)
+    {
+      mySerial.println("\t TURN OFF humidity.");
+      digitalWrite(HUMI_CTRL_PIN, LOW); 
+      humi_delay = 0;
+    }
+    else
+    {
+      humi_delay++;
+    }
   }
   else
   {
@@ -61,6 +72,7 @@ void humidity_func(double humidity)
     mySerial.println("\t humidity error");
   }
 }
+
 
 void temperature_func(double temperature)
 {
@@ -89,7 +101,7 @@ void temperature_func(double temperature)
 
 void setup()
 {
-    Serial.begin(9600);
+  Serial.begin(9600);
   xbee.setSerial(Serial);
   
   while (!Serial) {
@@ -102,8 +114,9 @@ void setup()
   mySerial.println(DHT_LIB_VERSION);
   mySerial.println();
   mySerial.println("Type,\tstatus,\tHumidity (%),\tTemperature (C)");
-   mySerial.println("SW serial debug.");
+  mySerial.println("SW serial debug.");
   
+  pinMode(HUMI_CTRL_PIN, OUTPUT);
 }
 
 void loop()
@@ -201,12 +214,13 @@ void loop()
   } else {
     // local XBee did not provide a timely TX Status Response -- should not happen
     mySerial.print("local XBee did not provide a timely TX Status Response\n");
+  
   }
 
   humidity_func(DHT.humidity);
   temperature_func(DHT.temperature);
 
-  delay(500);
+  delay(1000);
 }
 //
 // END OF FILE
