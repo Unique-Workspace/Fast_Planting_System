@@ -11,6 +11,7 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
+
 /* PIN DEFINE BEGIN */
 #define DHT11_PIN 2  //put the sensor in the digital pin 2
 #define HUMI_CTRL_PIN 3  // for humidifier on/off control
@@ -76,10 +77,13 @@ void humidity_func(double humidity)
   else if(humidity >= 99)
   {
     // ok
-    mySerial.println("\t humidity ok");
+    mySerial.println("\t humidity >=99");
     if(humi_delay > TIME_DELAY)
     {
+      mySerial.println("\t TURN OFF humidity.");
       digitalWrite(HUMI_CTRL_PIN, LOW); 
+      humi_delay = 0;
+
     }
     else
     {
@@ -92,6 +96,7 @@ void humidity_func(double humidity)
     mySerial.println("\t humidity error");
   }
 }
+
 
 void temperature_func(double temperature)
 {
@@ -145,7 +150,7 @@ void water_func(double water_temperature)
 
 void setup()
 {
-    Serial.begin(9600);
+  Serial.begin(9600);
   xbee.setSerial(Serial);
   
   while (!Serial) {
@@ -158,10 +163,10 @@ void setup()
   mySerial.println(DHT_LIB_VERSION);
   mySerial.println();
   mySerial.println("Type,\tstatus,\tHumidity (%),\tTemperature (C)");
-   mySerial.println("SW serial debug.");
+  mySerial.println("SW serial debug.");
   
   pinMode(HUMI_CTRL_PIN, OUTPUT);
-  
+
   // Start up the 18b20 water sensor library
   water_sensor.begin();
 }
@@ -270,6 +275,7 @@ void loop()
   } else {
     // local XBee did not provide a timely TX Status Response -- should not happen
     mySerial.print("local XBee did not provide a timely TX Status Response\n");
+  
   }
 
   
