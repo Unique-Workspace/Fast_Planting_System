@@ -8,18 +8,31 @@
 #include <SoftwareSerial.h>
 #include <stdlib.h> // for dtostrf()
 
-dht DHT;
+#include <OneWire.h>
+#include <DallasTemperature.h>
 
-#define DHT11_PIN 2//put the sensor in the digital pin 2
+/* PIN DEFINE BEGIN */
+#define DHT11_PIN 2  //put the sensor in the digital pin 2
+#define HUMI_CTRL_PIN 3  // for humidifier on/off control
+#define ONE_WIRE_BUS 4  // for 18b20 water temprature 
+/* PIN DEFINE END */
+
+/* DATA AREA BEGIN */
+#define TIME_DELAY  300
 #define LENGTH 20
-
-// create the XBee object
-XBee xbee = XBee();
-
 // MAX data payload: 32*7 + 19 = 243  bytes
 uint8_t payload[LENGTH];
 uint8_t str_temperature[7];
 uint8_t str_humidity[7];
+uint8_t str_water_tempe[7];
+uint8_t humi_delay = 0;
+
+dht DHT;
+/* DATA AREA END */
+
+/* XBEE STRUCTURE BEGIN */
+// create the XBee object
+XBee xbee = XBee();
 
 // SH + SL Address of receiving XBee
 XBeeAddress64 addr64 = XBeeAddress64(0x0013a200, 0x40b41039);
@@ -29,6 +42,9 @@ ZBTxStatusResponse txStatus = ZBTxStatusResponse();
 // create reusable response objects for responses we expect to handle 
 ZBRxResponse rx = ZBRxResponse();
 
+/* XBEE STRUCTURE END */
+
+/* SERIAL PORT BEGIN */
 // Define NewSoftSerial TX/RX pins
 // Connect Arduino pin 9 to TX of usb-serial device
 uint8_t ssRX = 10;
@@ -36,24 +52,39 @@ uint8_t ssRX = 10;
 uint8_t ssTX = 11;
 // Remember to connect all devices to a common Ground: XBee, Arduino and USB-Serial device
 SoftwareSerial mySerial(ssRX, ssTX);
+/* SERIAL PORT END */
+
+
+/* 18b20 water sensor begin */
+// Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
+OneWire oneWire(ONE_WIRE_BUS);
+
+// Pass our oneWire reference to Dallas Temperature. 
+DallasTemperature water_sensor(&oneWire);
+/* 18b20 water sensor end */
 
 void humidity_func(double humidity)
 {
   //humidity conditions
-  if(humidity > 0 && humidity < 40)
+  if(humidity > 0 && humidity < 99)
   {
     // increase
-    mySerial.println("\t humidity increase");
+    mySerial.println("\t need to increase humidity");
+    digitalWrite(HUMI_CTRL_PIN, HIGH);    // trun on humidifier
+    humi_delay = 0;
   }
-  else if(humidity >= 40 && humidity < 80)
+  else if(humidity >= 99)
   {
     // ok
     mySerial.println("\t humidity ok");
-  }
-  else if(humidity >= 80 && humidity < 100)
-  {
-    //decrease
-    mySerial.println("\t humidity decrease");
+    if(humi_delay > TIME_DELAY)
+    {
+      digitalWrite(HUMI_CTRL_PIN, LOW); 
+    }
+    else
+    {
+      humi_delay++;
+    }
   }
   else
   {
@@ -87,6 +118,31 @@ void temperature_func(double temperature)
   }
 }
 
+void water_func(double water_temperature)
+{
+  //temperature conditions
+  if(water_temperature < 10)
+  {
+    // increase
+    mySerial.println("\t water_temperature increase");
+  }
+  else if(water_temperature >= 10 && water_temperature < 30)
+  {
+    // ok
+    mySerial.println("\t water_temperature ok");
+  }
+  else if(water_temperature >= 30)
+  {
+    //decrease
+    mySerial.println("\t water_temperature decrease");
+  }
+  else
+  {
+    // error
+    mySerial.println("\t water_temperature error");
+  }
+}
+
 void setup()
 {
     Serial.begin(9600);
@@ -104,11 +160,17 @@ void setup()
   mySerial.println("Type,\tstatus,\tHumidity (%),\tTemperature (C)");
    mySerial.println("SW serial debug.");
   
+  pinMode(HUMI_CTRL_PIN, OUTPUT);
+  
+  // Start up the 18b20 water sensor library
+  water_sensor.begin();
 }
 
 void loop()
 {
   int i, j;
+  double water_tempe;
+  
   // READ DATA
   mySerial.print("DHT21, \t");
   int chk = DHT.read22(DHT11_PIN);
@@ -127,6 +189,13 @@ void loop()
   dtostrf(DHT.humidity, 3, 2, (char *)str_humidity);
   dtostrf(DHT.temperature, 3, 2, (char *)str_temperature);
   //mySerial.println(String((char *)str_humidity) + String((char *)str_temperature));
+  
+  water_sensor.requestTemperatures(); // Send the command to get temperatures
+  water_tempe = water_sensor.getTempCByIndex(0);
+  //dtostrf(water_tempe, 3, 2, (char *)str_water_tempe);
+  mySerial.print("Water temperature is: ");
+  mySerial.println(water_tempe);
+  
   i=0;
   payload[i++] = 'H';
   payload[i++] = ':';
@@ -203,10 +272,13 @@ void loop()
     mySerial.print("local XBee did not provide a timely TX Status Response\n");
   }
 
+  
+  
   humidity_func(DHT.humidity);
   temperature_func(DHT.temperature);
+  water_func(water_tempe);
 
-  delay(500);
+  delay(1000);
 }
 //
 // END OF FILE
