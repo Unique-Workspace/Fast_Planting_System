@@ -1,0 +1,22 @@
+<VBBSolution name="Fast_Planting_Arduino_Sch" perspective="VBB">
+	<LAYOUT currentView="0" >
+	<VIEW id="1">
+		<PANE>[Fast_Planting_Arduino_Sch]Breadboard0.VBB</PANE>
+	</VIEW>
+	<VIEW id="2">
+	</VIEW>
+	<VIEW id="3">
+	</VIEW>
+	</LAYOUT>
+<PROJECTS>
+<PROJECT>Fast_Planting_Arduino_Sch.SIM</PROJECT>
+<REFERENCES>
+<VBB-EXCLUDES>
+</VBB-EXCLUDES>
+<USER-INCLUDES>
+</USER-INCLUDES>
+<WEB-INCLUDES>
+</WEB-INCLUDES>
+</REFERENCES>
+</PROJECTS>
+</VBBSolution>

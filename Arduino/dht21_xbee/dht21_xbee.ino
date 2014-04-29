@@ -16,6 +16,7 @@
 #define DHT11_PIN 2  //put the sensor in the digital pin 2
 #define HUMI_CTRL_PIN 3  // for humidifier on/off control
 #define ONE_WIRE_BUS 4  // for 18b20 water temprature 
+#define WATER_CTRL_PIN 5 // for 18b20 water ctrl.
 /* PIN DEFINE END */
 
 /* DATA AREA BEGIN */
@@ -126,19 +127,21 @@ void temperature_func(double temperature)
 void water_func(double water_temperature)
 {
   //temperature conditions
-  if(water_temperature < 10)
+  if(water_temperature < 30)
   {
     // increase
+    digitalWrite(WATER_CTRL_PIN, HIGH); 
     mySerial.println("\t water_temperature increase");
   }
-  else if(water_temperature >= 10 && water_temperature < 30)
+  else if(water_temperature >= 30 && water_temperature < 35)
   {
     // ok
     mySerial.println("\t water_temperature ok");
   }
-  else if(water_temperature >= 30)
+  else if(water_temperature >= 35)
   {
     //decrease
+    digitalWrite(WATER_CTRL_PIN, LOW); 
     mySerial.println("\t water_temperature decrease");
   }
   else
@@ -166,6 +169,7 @@ void setup()
   mySerial.println("SW serial debug.");
   
   pinMode(HUMI_CTRL_PIN, OUTPUT);
+  pinMode(WATER_CTRL_PIN, OUTPUT);
 
   // Start up the 18b20 water sensor library
   water_sensor.begin();
