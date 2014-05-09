@@ -199,7 +199,7 @@ class XbeeThread(threading.Thread):
         
         text = 'H:' + strHum_num + ' T:' + strTemp_num + ' ' + now_time
         #print text
-        wx.CallAfter(self.Publisher.sendMessage('update', text))
+        wx.CallAfter(self.Publisher.sendMessage, 'update', text)
 
     def run(self):
         global xbee_thread_exit_flag
