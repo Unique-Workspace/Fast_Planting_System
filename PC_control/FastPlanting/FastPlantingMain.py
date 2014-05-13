@@ -52,7 +52,7 @@ class FastPlantingFrame(FastPlantingUI):
         self.Xbee.halt()
         self.Serial.close()
         print 'FastPlantingFrame delete.'
-        
+
     def on_txtMain_update(self, msg):
         print(msg.data)
         humidity_str="H:"
@@ -191,15 +191,19 @@ class XbeeThread(threading.Thread):
             return
         humidity_str = "H:"
         temperature_str = "T:"
-        nHumPos = orig_str.index(humidity_str)
-        strHum_num = orig_str[nHumPos+len(humidity_str):nHumPos+len(humidity_str)+5]
-        nTempPos = orig_str.index(temperature_str)
-        strTemp_num = orig_str[nTempPos+len(temperature_str):nTempPos+len(temperature_str)+5]
-        now_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+        try:
+            nHumPos = orig_str.index(humidity_str)
+            strHum_num = orig_str[nHumPos+len(humidity_str):nHumPos+len(humidity_str)+5]
+            nTempPos = orig_str.index(temperature_str)
+            strTemp_num = orig_str[nTempPos+len(temperature_str):nTempPos+len(temperature_str)+5]
+            now_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+            text = 'H:' + strHum_num + ' T:' + strTemp_num + ' ' + now_time
+            #print text
+            wx.CallAfter(self.Publisher.sendMessage, 'update', text)
+        except Exception, e:
+            print e
+            pass
         
-        text = 'H:' + strHum_num + ' T:' + strTemp_num + ' ' + now_time
-        #print text
-        wx.CallAfter(self.Publisher.sendMessage, 'update', text)
 
     def run(self):
         global xbee_thread_exit_flag

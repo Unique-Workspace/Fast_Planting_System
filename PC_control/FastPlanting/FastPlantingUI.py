@@ -126,8 +126,8 @@ class FastPlantingUI ( wx.Frame ):
 		self.m_staticTxtPort.Wrap( -1 )
 		bSizer8.Add( self.m_staticTxtPort, 0, wx.ALL, 5 )
 		
-		m_comboSerialChoices = [ u"COM1", u"COM2", u"COM3", u"COM4", u"COM5", u"COM6", u"COM7", u"COM8", u"COM9", u"COM10", u"COM11", u"COM12", u"COM13", u"COM14", u"COM15", u"COM16", u"COM17", u"COM18", u"COM19", u"COM20" ]
-		self.m_comboSerial = wx.ComboBox( self, wx.ID_ANY, u"COM1", wx.DefaultPosition, wx.DefaultSize, m_comboSerialChoices, 0 )
+		m_comboSerialChoices = [ u"/dev/ttyAMA0", u"COM1", u"COM2", u"COM3", u"COM4", u"COM5", u"COM6", u"COM7", u"COM8", u"COM9", u"COM10", u"COM11", u"COM12", u"COM13", u"COM14", u"COM15", u"COM16", u"COM17", u"COM18", u"COM19", u"COM20" ]
+		self.m_comboSerial = wx.ComboBox( self, wx.ID_ANY, u"/dev/ttyAMA0", wx.DefaultPosition, wx.DefaultSize, m_comboSerialChoices, 0 )
 		self.m_comboSerial.SetSelection( 0 )
 		bSizer8.Add( self.m_comboSerial, 0, wx.ALL, 5 )
 		
