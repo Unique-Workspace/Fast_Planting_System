@@ -42,6 +42,9 @@ String temp_room_max_key = "TRmax:";
 String temp_water_min_key = "TWmin:";
 String temp_water_max_key = "TWmax:";
 
+bool tx_send_flag = true;
+int tx_send_flag_count = 0;
+  
 dht DHT;
 /* DATA AREA END */
 
@@ -81,10 +84,16 @@ DallasTemperature water_sensor(&oneWire);
 void humidity_func(double humidity)
 {
   //humidity conditions
-  if(humidity > humi_min && humidity < humi_max)
+  if(humidity <= humi_min)
+  {
+    mySerial.println("\t humidity increase");
+    digitalWrite(HUMI_CTRL_PIN, HIGH);    // trun on humidifier
+    humi_delay = 0;
+  }
+  else if(humidity > humi_min && humidity < humi_max)
   {
     // increase
-    mySerial.println("\t humidity increase humidity");
+    mySerial.println("\t humidity increase");
     digitalWrite(HUMI_CTRL_PIN, HIGH);    // trun on humidifier
     humi_delay = 0;
   }
@@ -164,6 +173,7 @@ void water_func(double water_temperature)
   }
 }
 
+// parse the Rx payload data. get the temperature and humidity value from the packets.
 void parse_rxdata(char rx_data[])
 {
   int i, j;
@@ -191,35 +201,47 @@ void parse_rxdata(char rx_data[])
   {
     humi_min = strtod((const char *)strNum, NULL);
     mySerial.println(humi_min);
+    tx_send_flag = false;
+    tx_send_flag_count = 0;
   }
   else if(stringKey.compareTo(humi_max_key))
   {
     humi_max = strtod((const char *)strNum, NULL);
     mySerial.println(humi_max);
+    tx_send_flag = false;
+    tx_send_flag_count = 0;
   }
   else if(stringKey.compareTo(temp_room_min_key))
   {
     temp_room_min = strtod((const char *)strNum, NULL);
     mySerial.println(temp_room_min);
+    tx_send_flag = false;
+    tx_send_flag_count = 0;
   }
   else if(stringKey.compareTo(temp_room_max_key))
   {
     temp_room_max = strtod((const char *)strNum, NULL);
     mySerial.println(temp_room_max);
+    tx_send_flag = false;
+    tx_send_flag_count = 0;
   }
   else if(stringKey.compareTo(temp_water_min_key))
   {
     temp_water_min = strtod((const char *)strNum, NULL);
     mySerial.println(temp_water_min);
+    tx_send_flag = false;
+    tx_send_flag_count = 0;
   }
   else if(stringKey.compareTo(temp_water_max_key))
   {
     temp_water_max = strtod((const char *)strNum, NULL);
     mySerial.println(temp_water_max);
+    tx_send_flag = false;
+    tx_send_flag_count = 0;
   }
   else
   {
-    mySerial.println("[ERROR] parse_rxdata() not found." + stringKey);
+    mySerial.println("[ERROR] parse_rxdata() not found: " + stringKey);
   }
   
 }
@@ -233,7 +255,7 @@ void setup()
     ; // wait for serial port to connect. Needed for Leonardo only
   }
   // set the data rate for the SoftwareSerial port
-  mySerial.begin(9600);
+  mySerial.begin(115200);
   mySerial.println("DHT TEST PROGRAM for Fast Planting System");
   mySerial.print("LIBRARY VERSION: ");
   mySerial.println(DHT_LIB_VERSION);
@@ -279,6 +301,7 @@ void loop()
   //mySerial.print("Water temperature is: ");
   //mySerial.println(water_tempe);
   
+  // SEND DATA
   i=0;
   for(j=0; i<7 && str_humidity[j]!=0; i++, j++)
   {
@@ -296,12 +319,24 @@ void loop()
   }
   payload[i++] = ',';
   //mySerial.print((char *)payload);
-  xbee.send(zbTx);
-
-  delay(200);
+  if(tx_send_flag)
+  {
+    xbee.send(zbTx);
+  }
+  else
+  {
+    tx_send_flag_count++;
+    if(tx_send_flag_count>2)
+    {
+      tx_send_flag = true;
+    }
+  }
+  
+  // RECEIVE DATA
+  //delay(200);
   // after sending a tx request, we expect a status response
   // wait up to half second for the status response
-  if (xbee.readPacket(500)) {
+  if (xbee.readPacket(200)) {
     // got a response!
     mySerial.print("got a response!\n");
     // should be a znet tx status            	
@@ -369,8 +404,7 @@ void loop()
   
   }
 
-  
-  
+  // HANDLE DATA
   humidity_func(DHT.humidity);
   temperature_func(DHT.temperature);
   water_func(water_tempe);

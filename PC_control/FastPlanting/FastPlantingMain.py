@@ -128,20 +128,20 @@ class FastPlantingFrame(FastPlantingUI):
         # Send Tx packet Temperature min
         if self.Serial.isOpen():
             self.Xbee.send('tx', frame_id='A', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(tempra_min_data))
-        
+
         # Wait for response
-        if self.Serial.isOpen() and self.Serial.inWaiting():
-            response = self.Xbee.wait_read_frame()
-            print response
+        #if self.Serial.isOpen() and self.Serial.inWaiting():
+        #    response = self.Xbee.wait_read_frame()
+        #    print response
 
         # Send Tx packet Temperature max
         if self.Serial.isOpen():
             self.Xbee.send('tx', frame_id='B', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(tempra_max_data))
         
         # Wait for response
-        if self.Serial.isOpen() and self.Serial.inWaiting():
-            response = self.Xbee.wait_read_frame()
-            print response
+        #if self.Serial.isOpen() and self.Serial.inWaiting():
+        #    response = self.Xbee.wait_read_frame()
+        #    print response
 
     def on_btnHumCtrl_clicked(self, event):
         humi_min = self.m_txtHumMin.GetValue()[0:6]
@@ -160,20 +160,20 @@ class FastPlantingFrame(FastPlantingUI):
         # Send Tx packet Humidity min
         if self.Serial.isOpen():
             self.Xbee.send('tx', frame_id='C', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(humi_min_data))
-        
+
         # Wait for response
-        if self.Serial.isOpen() and self.Serial.inWaiting():
-            response = self.Xbee.wait_read_frame()
-            print response
+        #if self.Serial.isOpen() and self.Serial.inWaiting():
+        #    response = self.Xbee.wait_read_frame()
+        #    print response
 
         # Send Tx packet Humidity max
         if self.Serial.isOpen():
             self.Xbee.send('tx', frame_id='D', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(humi_max_data))
         
         # Wait for response
-        if self.Serial.isOpen() and self.Serial.inWaiting():
-            response = self.Xbee.wait_read_frame()
-            print response
+        #if self.Serial.isOpen() and self.Serial.inWaiting():
+        #    response = self.Xbee.wait_read_frame()
+        #    print response
 
     def on_btnTempWaterCtrl_clicked(self, event):
         temp_water_min = self.m_txtTempWaterMin.GetValue()[0:6]
@@ -194,18 +194,18 @@ class FastPlantingFrame(FastPlantingUI):
             self.Xbee.send('tx', frame_id='E', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(temp_water_min_data))
 
         # Wait for response
-        if self.Serial.isOpen() and self.Serial.inWaiting():
-            response = self.Xbee.wait_read_frame()
-            print response
+        #if self.Serial.isOpen() and self.Serial.inWaiting():
+        #    response = self.Xbee.wait_read_frame()
+        #    print response
 
         # Send Tx packet Humidity max
         if self.Serial.isOpen():
             self.Xbee.send('tx', frame_id='F', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(temp_water_max_data))
 
         # Wait for response
-        if self.Serial.isOpen() and self.Serial.inWaiting():
-            response = self.Xbee.wait_read_frame()
-            print response
+        #if self.Serial.isOpen() and self.Serial.inWaiting():
+        #    response = self.Xbee.wait_read_frame()
+        #    print response
 
 
 class XbeeThread(threading.Thread):
