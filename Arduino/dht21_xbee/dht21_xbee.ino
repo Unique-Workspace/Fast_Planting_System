@@ -28,6 +28,19 @@ uint8_t str_temperature[7];
 uint8_t str_humidity[7];
 uint8_t str_water_tempe[7];
 uint8_t humi_delay = 0;
+double temp_room_min = 10;
+double temp_room_max = 30;
+double temp_water_min = 20;
+double temp_water_max = 30;
+double humi_min = 95;
+double humi_max = 99;
+
+String humi_min_key = "Hmin:";
+String humi_max_key = "Hmax:";
+String temp_room_min_key = "TRmin:";
+String temp_room_max_key = "TRmax:";
+String temp_water_min_key = "TWmin:";
+String temp_water_max_key = "TWmax:";
 
 dht DHT;
 /* DATA AREA END */
@@ -37,7 +50,7 @@ dht DHT;
 XBee xbee = XBee();
 
 // SH + SL Address of receiving XBee
-XBeeAddress64 addr64 = XBeeAddress64(0x0013a200, 0x40b41039);
+XBeeAddress64 addr64 = XBeeAddress64(0x0013a200, 0x40b41060); //39
 ZBTxRequest zbTx = ZBTxRequest(addr64, payload, sizeof(payload));
 ZBTxStatusResponse txStatus = ZBTxStatusResponse();
 
@@ -68,14 +81,14 @@ DallasTemperature water_sensor(&oneWire);
 void humidity_func(double humidity)
 {
   //humidity conditions
-  if(humidity > 0 && humidity < 99)
+  if(humidity > humi_min && humidity < humi_max)
   {
     // increase
-    mySerial.println("\t need to increase humidity");
+    mySerial.println("\t humidity increase humidity");
     digitalWrite(HUMI_CTRL_PIN, HIGH);    // trun on humidifier
     humi_delay = 0;
   }
-  else if(humidity >= 99)
+  else if(humidity >= humi_max)
   {
     // ok
     mySerial.println("\t humidity >=99");
@@ -102,17 +115,17 @@ void humidity_func(double humidity)
 void temperature_func(double temperature)
 {
   //temperature conditions
-  if(temperature < 10)
+  if(temperature < temp_room_min)
   {
     // increase
     mySerial.println("\t temperature increase");
   }
-  else if(temperature >= 10 && temperature < 30)
+  else if(temperature >= temp_room_min && temperature < temp_room_max)
   {
     // ok
     mySerial.println("\t temperature ok");
   }
-  else if(temperature >= 30)
+  else if(temperature >= temp_room_max)
   {
     //decrease
     mySerial.println("\t temperature decrease");
@@ -127,18 +140,18 @@ void temperature_func(double temperature)
 void water_func(double water_temperature)
 {
   //temperature conditions
-  if(water_temperature < 30)
+  if(water_temperature < temp_water_min)
   {
     // increase
     digitalWrite(WATER_CTRL_PIN, HIGH); 
     mySerial.println("\t water_temperature increase");
   }
-  else if(water_temperature >= 30 && water_temperature < 35)
+  else if(water_temperature >= temp_water_min && water_temperature < temp_water_max)
   {
     // ok
     mySerial.println("\t water_temperature ok");
   }
-  else if(water_temperature >= 35)
+  else if(water_temperature >= temp_water_max)
   {
     //decrease
     digitalWrite(WATER_CTRL_PIN, LOW); 
@@ -151,9 +164,69 @@ void water_func(double water_temperature)
   }
 }
 
+void parse_rxdata(char rx_data[])
+{
+  int i, j;
+  char strKey[8];
+  char strNum[8];
+  
+  mySerial.println(rx_data);
+  for(i = 0, j = 0; rx_data[i] != ':'; i++, j++)
+  {
+    strKey[j] = rx_data[i];
+  }
+  strKey[j++] = ':';
+  strKey[j++] = '\0';
+  String stringKey = strKey;
+  mySerial.println(stringKey);
+  
+  // j<6 cut off extral chars.it will cause arduino reset.
+  for(i++, j = 0; rx_data[i] != '\0' && j<6; i++, j++)
+  {
+    strNum[j] = rx_data[i];
+  }
+  strNum[j++] = '\0';
+  
+  if(stringKey.compareTo(humi_min_key))
+  {
+    humi_min = strtod((const char *)strNum, NULL);
+    mySerial.println(humi_min);
+  }
+  else if(stringKey.compareTo(humi_max_key))
+  {
+    humi_max = strtod((const char *)strNum, NULL);
+    mySerial.println(humi_max);
+  }
+  else if(stringKey.compareTo(temp_room_min_key))
+  {
+    temp_room_min = strtod((const char *)strNum, NULL);
+    mySerial.println(temp_room_min);
+  }
+  else if(stringKey.compareTo(temp_room_max_key))
+  {
+    temp_room_max = strtod((const char *)strNum, NULL);
+    mySerial.println(temp_room_max);
+  }
+  else if(stringKey.compareTo(temp_water_min_key))
+  {
+    temp_water_min = strtod((const char *)strNum, NULL);
+    mySerial.println(temp_water_min);
+  }
+  else if(stringKey.compareTo(temp_water_max_key))
+  {
+    temp_water_max = strtod((const char *)strNum, NULL);
+    mySerial.println(temp_water_max);
+  }
+  else
+  {
+    mySerial.println("[ERROR] parse_rxdata() not found." + stringKey);
+  }
+  
+}
+
 void setup()
 {
-  Serial.begin(9600);
+  Serial.begin(115200);
   xbee.setSerial(Serial);
   
   while (!Serial) {
@@ -179,9 +252,10 @@ void loop()
 {
   int i, j;
   double water_tempe;
+  char rx_data[64];
   
   // READ DATA
-  mySerial.print("DHT21, \t");
+  //mySerial.print("DHT21, \t");
   int chk = DHT.read22(DHT11_PIN);
   switch (chk)
   {
@@ -191,9 +265,9 @@ void loop()
     default: mySerial.print("Unknown error,\t"); break;
   }
   // DISPLAT DATA
-  mySerial.print(DHT.humidity,1);
-  mySerial.print(",\t");
-  mySerial.println(DHT.temperature,1);
+  //mySerial.print(DHT.humidity,1);
+  //mySerial.print(",\t");
+  //mySerial.println(DHT.temperature,1);
   
   dtostrf(DHT.humidity, 3, 2, (char *)str_humidity);
   dtostrf(DHT.temperature, 3, 2, (char *)str_temperature);
@@ -201,23 +275,26 @@ void loop()
   
   water_sensor.requestTemperatures(); // Send the command to get temperatures
   water_tempe = water_sensor.getTempCByIndex(0);
-  //dtostrf(water_tempe, 3, 2, (char *)str_water_tempe);
-  mySerial.print("Water temperature is: ");
-  mySerial.println(water_tempe);
+  dtostrf(water_tempe, 3, 2, (char *)str_water_tempe);
+  //mySerial.print("Water temperature is: ");
+  //mySerial.println(water_tempe);
   
   i=0;
-  payload[i++] = 'H';
-  payload[i++] = ':';
   for(j=0; i<7 && str_humidity[j]!=0; i++, j++)
   {
     payload[i]=str_humidity[j];
   }
-  payload[i++] = 'T';
-  payload[i++] = ':';
+  payload[i++] = ',';
   for(j=0; j<7 && str_temperature[j]!=0; i++,j++)
   {
     payload[i] = str_temperature[j];
   }
+  payload[i++] = ',';
+  for(j=0; j<7 && str_water_tempe[j]!=0; i++,j++)
+  {
+    payload[i] = str_water_tempe[j];
+  }
+  payload[i++] = ',';
   //mySerial.print((char *)payload);
   xbee.send(zbTx);
 
@@ -252,33 +329,43 @@ void loop()
         } else {
           mySerial.println("packet not acknowledged");
         }
-        
+        /***
         mySerial.print("checksum is ");
         mySerial.println(rx.getChecksum(), HEX);
 
         mySerial.print("packet length is ");
         mySerial.println(rx.getPacketLength(), DEC);
         
-         for (int i = 0; i < rx.getDataLength(); i++) {
+        mySerial.print("data length is ");
+        mySerial.println(rx.getDataLength(), DEC);
+        ***/
+         for (i = 0; i < rx.getDataLength(); i++) {
+           /***
           mySerial.print("payload [");
           mySerial.print(i, DEC);
           mySerial.print("] is ");
           mySerial.println(rx.getData()[i], HEX);
+          ***/
+          rx_data[i] = rx.getData()[i];
         }
+        rx_data[i++] = '\0';
+        parse_rxdata(rx_data);
         
-       for (int i = 0; i < xbee.getResponse().getFrameDataLength(); i++) {
+        /***
+       for (i = 0; i < xbee.getResponse().getFrameDataLength(); i++) {
         mySerial.print("frame data [");
         mySerial.print(i, DEC);
         mySerial.print("] is ");
         mySerial.println(xbee.getResponse().getFrameData()[i], HEX);
       }
+      ***/
     }
   } else if (xbee.getResponse().isError()) {
     mySerial.print("Error reading packet.  Error code: ");  
     mySerial.println(xbee.getResponse().getErrorCode());
   } else {
     // local XBee did not provide a timely TX Status Response -- should not happen
-    mySerial.print("local XBee did not provide a timely TX Status Response\n");
+    mySerial.print("No TX Status Response\n");
   
   }
 
@@ -288,7 +375,7 @@ void loop()
   temperature_func(DHT.temperature);
   water_func(water_tempe);
 
-  delay(1000);
+  //delay(1000);
 }
 //
 // END OF FILE

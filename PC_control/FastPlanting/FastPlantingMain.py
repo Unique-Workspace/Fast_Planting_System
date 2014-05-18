@@ -2,13 +2,20 @@
 # -*- coding: utf-8 -*-
 
 """
-receive_samples_async.py
+FastPlantingMain.py
 
-By Paul Malmsten, 2010
-pmalmsten@gmail.com
+By Kun Ling, 2014
+timonkun@gmail.com
 
-This example reads the serial port and asynchronously processes IO data
-received from a remote XBee.
+This is main program for Fast Planting System.
+
+2014.05.17
+sendMessage() takes exactly 2 arguments (3 given)
+
+2014.05.15
+程序退出时出现：“swig/python detected a memory leak of type 'wxPyXmlSubclassFactory *', no destructor found.”
+参考：https://groups.google.com/forum/#!topic/wxPython-users/984OzOdHQCc
+无须理会
 """
 
 import wx
@@ -17,16 +24,14 @@ from wx.lib.pubsub import pub
 from FastPlantingUI import FastPlantingUI
 
 from xbee import ZigBee
-import time
 import serial
-import sys,string
 import time
 import threading
 
 R1_ADDR_LONG = b'\x00\x13\xA2\x00\x40\xB4\x10\x3b'
 R1_ADDR_SHORT = b'\xff\xfe' 
 
-xbee_thread_exit_flag = 0
+xbee_thread_exit_flag = False
 
 class FastPlantingFrame(FastPlantingUI):
 
@@ -35,7 +40,7 @@ class FastPlantingFrame(FastPlantingUI):
 
         #create a pubsub receiver
         Publisher = pub.Publisher()
-        Publisher.subscribe(self.on_txtMain_update,'update')
+        Publisher.subscribe(self.on_txtMain_update, 'update')
 
         # Open serial port
         self.Serial = serial.Serial()
@@ -44,11 +49,11 @@ class FastPlantingFrame(FastPlantingUI):
         #self.Xbee = ZigBee(self.Serial, callback=self.message_received)
         self.Xbee = ZigBee(self.Serial)
         
-        self.serialThread = XbeeThread(self.Serial, self.Xbee, Publisher) 
+        self.serialThread = XbeeThread(self.Serial, self.Xbee, Publisher)
 
     def __del__(self):
         global xbee_thread_exit_flag
-        xbee_thread_exit_flag = 1
+        xbee_thread_exit_flag = True
         self.Xbee.halt()
         self.Serial.close()
         print 'FastPlantingFrame delete.'
@@ -56,12 +61,15 @@ class FastPlantingFrame(FastPlantingUI):
     def on_txtMain_update(self, msg):
         print(msg.data)
         humidity_str="H:"
-        temperature_str="T:"
+        temperature_str="Tr:"
+        temperature_water_str="Tw:"
         nHumPos = msg.data.index(humidity_str)
         strHum_num = msg.data[nHumPos+len(humidity_str):nHumPos+len(humidity_str)+5]
         nTempPos = msg.data.index(temperature_str)
         strTemp_num = msg.data[nTempPos+len(temperature_str):nTempPos+len(temperature_str)+5]
-        now_time = time.strftime('%m-%d %H:%M:%S',time.localtime(time.time()))
+        nTempWaterPos = msg.data.index(temperature_water_str)
+        strTempWater_num = msg.data[nTempWaterPos+len(temperature_water_str):nTempWaterPos+len(temperature_water_str)+5]
+        now_time = time.strftime('%m-%d %H:%M:%S', time.localtime(time.time()))
         #print data
         self.m_txtMain.AppendText(msg.data)
         self.m_txtMain.AppendText('\n')
@@ -69,6 +77,8 @@ class FastPlantingFrame(FastPlantingUI):
         self.m_textTemp.AppendText(strTemp_num)
         self.m_textHum.Clear()
         self.m_textHum.AppendText(strHum_num)
+        self.m_textTempWater.Clear()
+        self.m_textTempWater.AppendText(strTempWater_num)
         self.m_textTime.Clear()
         self.m_textTime.AppendText(now_time)
 
@@ -100,23 +110,24 @@ class FastPlantingFrame(FastPlantingUI):
             self.m_imgStat.SetBitmap(Img_inclosing.getBitmap())
 
     def on_btnTempCtrl_clicked( self, event ):
-        strTempMin = self.m_txtTempMin.GetValue()
-        strTempMax = self.m_txtTempMax.GetValue()
-        nTempMin = float(strTempMin)
-        nTempMax = float(strTempMax)
-        if nTempMin < 0 or nTempMin > 50:
-            print '[Error]TempMin out of range: ' + strTempMin
+        tempra_min = self.m_txtTempMin.GetValue()[0:6]
+        tempra_max = self.m_txtTempMax.GetValue()[0:6]
+        if float(tempra_min) < 0 or float(tempra_min) > 50:
+            print '[Error]TempMin out of range: ' + tempra_min
             return
-        if nTempMax < 0 or nTempMax > 50:
-            print '[Error]TempMax out of range: ' + strTempMax
+        if float(tempra_max) < 0 or float(tempra_max) > 50:
+            print '[Error]TempMax out of range: ' + tempra_max
             return
-        if nTempMax < nTempMin:
+        if float(tempra_max) < float(tempra_min):
             print '[Error]TempMax < TempMin'
             return
 
+        tempra_min_data = 'TRmin:' + tempra_min
+        tempra_max_data = 'TRmax:' + tempra_max
+        print tempra_min_data
         # Send Tx packet Temperature min
         if self.Serial.isOpen():
-            self.Xbee.send('tx', frame_id='A', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(nTempMin))
+            self.Xbee.send('tx', frame_id='A', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(tempra_min_data))
         
         # Wait for response
         if self.Serial.isOpen() and self.Serial.inWaiting():
@@ -125,30 +136,30 @@ class FastPlantingFrame(FastPlantingUI):
 
         # Send Tx packet Temperature max
         if self.Serial.isOpen():
-            self.Xbee.send('tx', frame_id='B', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(nTempMax))
+            self.Xbee.send('tx', frame_id='B', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(tempra_max_data))
         
         # Wait for response
         if self.Serial.isOpen() and self.Serial.inWaiting():
             response = self.Xbee.wait_read_frame()
             print response
 
-    def on_btnHumCtrl_clicked( self, event ):
-        strHumMin = self.m_txtHumMin.GetValue()
-        strHumMax = self.m_txtHumMax.GetValue()
-        nHumMin = float(strHumMin)
-        nHumMax = float(strHumMax)
-        if nHumMin < 0 or nHumMin > 100:
-            print '[Error]HumMin out of range: ' + strHumMin
+    def on_btnHumCtrl_clicked(self, event):
+        humi_min = self.m_txtHumMin.GetValue()[0:6]
+        humi_max = self.m_txtHumMax.GetValue()[0:6]
+        if float(humi_min) < 0 or float(humi_min) > 100:
+            print '[Error]HumMin out of range: ' + humi_min
             return
-        if nHumMax < 0 or nHumMax > 100:
-            print '[Error]HumMax out of range: ' + strHumMax
+        if float(humi_max) < 0 or float(humi_max) > 100:
+            print '[Error]HumMax out of range: ' + humi_max
             return
-        if nHumMax < nHumMin:
+        if float(humi_max) < float(humi_min):
             print '[Error]HumMax < HumMin'
             return
+        humi_min_data = 'Hmin:' + humi_min
+        humi_max_data = 'Hmax:' + humi_max
         # Send Tx packet Humidity min
         if self.Serial.isOpen():
-            self.Xbee.send('tx', frame_id='C', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(nHumMin))
+            self.Xbee.send('tx', frame_id='C', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(humi_min_data))
         
         # Wait for response
         if self.Serial.isOpen() and self.Serial.inWaiting():
@@ -157,12 +168,45 @@ class FastPlantingFrame(FastPlantingUI):
 
         # Send Tx packet Humidity max
         if self.Serial.isOpen():
-            self.Xbee.send('tx', frame_id='D', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(nHumMax))
+            self.Xbee.send('tx', frame_id='D', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(humi_max_data))
         
         # Wait for response
         if self.Serial.isOpen() and self.Serial.inWaiting():
             response = self.Xbee.wait_read_frame()
             print response
+
+    def on_btnTempWaterCtrl_clicked(self, event):
+        temp_water_min = self.m_txtTempWaterMin.GetValue()[0:6]
+        temp_water_max = self.m_txtTempWaterMax.GetValue()[0:6]
+        if float(temp_water_min) < 0 or float(temp_water_min) > 50:
+            print '[Error]TempWaterMin out of range: ' + temp_water_min
+            return
+        if float(temp_water_max) < 0 or float(temp_water_max) > 50:
+            print '[Error]TempWaterMax out of range: ' + temp_water_max
+            return
+        if float(temp_water_max) < float(temp_water_min):
+            print '[Error]TempWaterMax < TempWaterMin'
+            return
+        temp_water_min_data = 'TWmin:' + temp_water_min
+        temp_water_max_data = 'TWmax:' + temp_water_max
+        # Send Tx packet Humidity min
+        if self.Serial.isOpen():
+            self.Xbee.send('tx', frame_id='E', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(temp_water_min_data))
+
+        # Wait for response
+        if self.Serial.isOpen() and self.Serial.inWaiting():
+            response = self.Xbee.wait_read_frame()
+            print response
+
+        # Send Tx packet Humidity max
+        if self.Serial.isOpen():
+            self.Xbee.send('tx', frame_id='F', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(temp_water_max_data))
+
+        # Wait for response
+        if self.Serial.isOpen() and self.Serial.inWaiting():
+            response = self.Xbee.wait_read_frame()
+            print response
+
 
 class XbeeThread(threading.Thread):
 
@@ -189,17 +233,18 @@ class XbeeThread(threading.Thread):
         except Exception, e:    # Except for receive empty Rx data while sending Tx data.
             print e
             return
-        humidity_str = "H:"
-        temperature_str = "T:"
         try:
-            nHumPos = orig_str.index(humidity_str)
-            strHum_num = orig_str[nHumPos+len(humidity_str):nHumPos+len(humidity_str)+5]
-            nTempPos = orig_str.index(temperature_str)
-            strTemp_num = orig_str[nTempPos+len(temperature_str):nTempPos+len(temperature_str)+5]
+            '''数据结构：字符串类型 '湿度，温度，水温' '''
+            #print orig_str
+            text = orig_str.split(',')
+            humidity = text[0]
+            temperature_room = text[1]
+            temperature_water = text[2]
             now_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
-            text = 'H:' + strHum_num + ' T:' + strTemp_num + ' ' + now_time
+            text = 'H:' + humidity + ' Tr:' + temperature_room + ' Tw:' + temperature_water + ' ' + now_time
             #print text
-            wx.CallAfter(self.Publisher.sendMessage, 'update', text)
+            #wx.CallAfter(pub.sendMessage, 'update', text)
+            self.Publisher.sendMessage('update', text)
         except Exception, e:
             print e
             pass
@@ -208,14 +253,14 @@ class XbeeThread(threading.Thread):
     def run(self):
         global xbee_thread_exit_flag
         # Do other stuff in the main thread
-        while xbee_thread_exit_flag == 0:
+        while not xbee_thread_exit_flag:
             try:
                 if self.Serial.isOpen() and self.Serial.inWaiting():
                     # print 'serial is ok'
                     data = self.Xbee.wait_read_frame()
                     self.message_received(data)
                     
-                time.sleep(1)
+                time.sleep(3)
             except KeyboardInterrupt:
                 break
 
@@ -237,7 +282,7 @@ Img_inopening = embeddedimage.PyEmbeddedImage(
     "GGFIiqHY1AIAg2UtGigTDxsAAAAASUVORK5CYII=")
 
 if __name__ == '__main__':
-    app = wx.PySimpleApp()
+    app = wx.App(False)
     frame = FastPlantingFrame()
     frame.Show(True)
     app.MainLoop()

@@ -17,7 +17,7 @@ import wx.xrc
 class FastPlantingUI ( wx.Frame ):
 	
 	def __init__( self, parent ):
-		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"FastPlanting", pos = wx.DefaultPosition, size = wx.Size( 550,351 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
+		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"FastPlanting", pos = wx.DefaultPosition, size = wx.Size( 648,388 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
 		
 		self.SetSizeHintsSz( wx.DefaultSize, wx.DefaultSize )
 		
@@ -25,8 +25,11 @@ class FastPlantingUI ( wx.Frame ):
 		
 		bSizer4 = wx.BoxSizer( wx.VERTICAL )
 		
-		self.m_txtMain = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_MULTILINE|wx.TE_READONLY )
+		self.m_txtMain = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( -1,-1 ), wx.TE_MULTILINE|wx.TE_READONLY )
 		bSizer4.Add( self.m_txtMain, 1, wx.ALL|wx.EXPAND, 5 )
+		
+		self.m_btnClear = wx.Button( self, wx.ID_ANY, u"Clear", wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer4.Add( self.m_btnClear, 0, wx.ALL, 5 )
 		
 		
 		bSizer6.Add( bSizer4, 1, wx.EXPAND, 5 )
@@ -91,6 +94,35 @@ class FastPlantingUI ( wx.Frame ):
 		
 		sbSizer4.Add( bSizer81, 1, wx.EXPAND, 5 )
 		
+		bSizer71 = wx.BoxSizer( wx.HORIZONTAL )
+		
+		self.m_staticConfigTemp2 = wx.StaticText( self, wx.ID_ANY, u"水温范围：", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticConfigTemp2.Wrap( -1 )
+		bSizer71.Add( self.m_staticConfigTemp2, 0, wx.ALL, 5 )
+		
+		self.m_txtTempWaterMin = wx.TextCtrl( self, wx.ID_ANY, u"20.00", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_txtTempWaterMin.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), 70, 93, 90, False, wx.EmptyString ) )
+		
+		bSizer71.Add( self.m_txtTempWaterMin, 0, wx.ALL, 3 )
+		
+		self.m_staticText72 = wx.StaticText( self, wx.ID_ANY, u"~", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText72.Wrap( -1 )
+		bSizer71.Add( self.m_staticText72, 0, wx.ALL, 5 )
+		
+		self.m_txtTempWaterMax = wx.TextCtrl( self, wx.ID_ANY, u"30.00", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_txtTempWaterMax.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), 70, 93, 90, False, wx.EmptyString ) )
+		
+		bSizer71.Add( self.m_txtTempWaterMax, 0, wx.ALL, 5 )
+		
+		
+		bSizer71.AddSpacer( ( 0, 0), 1, wx.EXPAND, 5 )
+		
+		self.m_btnTempWaterCtrl = wx.Button( self, wx.ID_ANY, u"水温设定", wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer71.Add( self.m_btnTempWaterCtrl, 0, wx.ALL, 5 )
+		
+		
+		sbSizer4.Add( bSizer71, 1, wx.EXPAND, 5 )
+		
 		
 		bSizer6.Add( sbSizer4, 1, wx.EXPAND, 5 )
 		
@@ -110,9 +142,16 @@ class FastPlantingUI ( wx.Frame ):
 		self.m_textHum = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_READONLY|wx.SIMPLE_BORDER )
 		bSizer61.Add( self.m_textHum, 0, wx.ALL, 5 )
 		
-		self.m_staticTxtTime = wx.StaticText( self, wx.ID_ANY, u"时间：", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticTxtTime = wx.StaticText( self, wx.ID_ANY, u"水温：", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticTxtTime.Wrap( -1 )
 		bSizer61.Add( self.m_staticTxtTime, 0, wx.ALL, 5 )
+		
+		self.m_textTempWater = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_READONLY|wx.SIMPLE_BORDER )
+		bSizer61.Add( self.m_textTempWater, 0, wx.ALL, 5 )
+		
+		self.m_staticTxtTime1 = wx.StaticText( self, wx.ID_ANY, u"时间：", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticTxtTime1.Wrap( -1 )
+		bSizer61.Add( self.m_staticTxtTime1, 0, wx.ALL, 5 )
 		
 		self.m_textTime = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_READONLY|wx.SIMPLE_BORDER )
 		bSizer61.Add( self.m_textTime, 0, wx.ALL, 5 )
@@ -126,8 +165,8 @@ class FastPlantingUI ( wx.Frame ):
 		self.m_staticTxtPort.Wrap( -1 )
 		bSizer8.Add( self.m_staticTxtPort, 0, wx.ALL, 5 )
 		
-		m_comboSerialChoices = [ u"/dev/ttyAMA0", u"COM1", u"COM2", u"COM3", u"COM4", u"COM5", u"COM6", u"COM7", u"COM8", u"COM9", u"COM10", u"COM11", u"COM12", u"COM13", u"COM14", u"COM15", u"COM16", u"COM17", u"COM18", u"COM19", u"COM20" ]
-		self.m_comboSerial = wx.ComboBox( self, wx.ID_ANY, u"/dev/ttyAMA0", wx.DefaultPosition, wx.DefaultSize, m_comboSerialChoices, 0 )
+		m_comboSerialChoices = [ u"COM1", u"COM2", u"COM3", u"COM4", u"COM5", u"COM6", u"COM7", u"COM8", u"COM9", u"COM10", u"COM11", u"COM12", u"COM13", u"COM14", u"COM15", u"COM16", u"COM17", u"COM18", u"COM19", u"COM20" ]
+		self.m_comboSerial = wx.ComboBox( self, wx.ID_ANY, u"COM28", wx.DefaultPosition, wx.DefaultSize, m_comboSerialChoices, 0 )
 		self.m_comboSerial.SetSelection( 0 )
 		bSizer8.Add( self.m_comboSerial, 0, wx.ALL, 5 )
 		
@@ -135,8 +174,8 @@ class FastPlantingUI ( wx.Frame ):
 		self.m_staticTxtBaudRate.Wrap( -1 )
 		bSizer8.Add( self.m_staticTxtBaudRate, 0, wx.ALL, 5 )
 		
-		m_comboBaudRateChoices = [ u"9600", u"14400", u"19200" ]
-		self.m_comboBaudRate = wx.ComboBox( self, wx.ID_ANY, u"9600", wx.DefaultPosition, wx.DefaultSize, m_comboBaudRateChoices, 0 )
+		m_comboBaudRateChoices = [ u"9600", u"14400", u"19200", u"115200" ]
+		self.m_comboBaudRate = wx.ComboBox( self, wx.ID_ANY, u"115200", wx.DefaultPosition, wx.DefaultSize, m_comboBaudRateChoices, 0 )
 		bSizer8.Add( self.m_comboBaudRate, 0, wx.ALL, 5 )
 		
 		
@@ -151,17 +190,6 @@ class FastPlantingUI ( wx.Frame ):
 		
 		bSizer6.Add( bSizer8, 0, wx.EXPAND, 5 )
 		
-		bSizer3 = wx.BoxSizer( wx.HORIZONTAL )
-		
-		
-		bSizer3.AddSpacer( ( 0, 0), 1, wx.EXPAND, 5 )
-		
-		self.m_btnClear = wx.Button( self, wx.ID_ANY, u"Clear", wx.DefaultPosition, wx.DefaultSize, 0 )
-		bSizer3.Add( self.m_btnClear, 0, wx.ALL, 5 )
-		
-		
-		bSizer6.Add( bSizer3, 0, wx.EXPAND, 5 )
-		
 		
 		self.SetSizer( bSizer6 )
 		self.Layout()
@@ -171,26 +199,30 @@ class FastPlantingUI ( wx.Frame ):
 		self.Centre( wx.BOTH )
 		
 		# Connect Events
+		self.m_btnClear.Bind( wx.EVT_BUTTON, self.on_btnClear_clicked )
 		self.m_btnTempCtrl.Bind( wx.EVT_BUTTON, self.on_btnTempCtrl_clicked )
 		self.m_btnHumCtrl.Bind( wx.EVT_BUTTON, self.on_btnHumCtrl_clicked )
+		self.m_btnTempWaterCtrl.Bind( wx.EVT_BUTTON, self.on_btnTempWaterCtrl_clicked )
 		self.m_btnConnect.Bind( wx.EVT_BUTTON, self.on_btnConnect_clicked )
-		self.m_btnClear.Bind( wx.EVT_BUTTON, self.on_btnClear_clicked )
 	
 	def __del__( self ):
 		pass
 	
 	
 	# Virtual event handlers, overide them in your derived class
+	def on_btnClear_clicked( self, event ):
+		event.Skip()
+	
 	def on_btnTempCtrl_clicked( self, event ):
 		event.Skip()
 	
 	def on_btnHumCtrl_clicked( self, event ):
 		event.Skip()
 	
-	def on_btnConnect_clicked( self, event ):
+	def on_btnTempWaterCtrl_clicked( self, event ):
 		event.Skip()
 	
-	def on_btnClear_clicked( self, event ):
+	def on_btnConnect_clicked( self, event ):
 		event.Skip()
 	
 

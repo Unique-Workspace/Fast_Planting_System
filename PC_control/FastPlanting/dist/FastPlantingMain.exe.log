@@ -4,3 +4,8 @@ Traceback (most recent call last):
   File "xbee\base.pyc", line 84, in _write
   File "serial\serialwin32.pyc", line 279, in write
 serial.serialutil.SerialException: Attempting to use a port that is not open
+Traceback (most recent call last):
+  File "FastPlantingMain.py", line 21, in <module>
+  File "wx\__init__.pyc", line 45, in <module>
+  File "wx\_core.pyc", line 125, in <module>
+AttributeError: 'module' object has no attribute 'PROCESS_ENTER'
