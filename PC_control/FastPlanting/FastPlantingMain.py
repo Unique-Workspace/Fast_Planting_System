@@ -20,6 +20,7 @@ sendMessage() takes exactly 2 arguments (3 given)
 
 import wx
 import wx.xrc
+from wx.lib.pubsub import setuparg1
 from wx.lib.pubsub import pub
 from FastPlantingUI import FastPlantingUI
 
@@ -39,8 +40,7 @@ class FastPlantingFrame(FastPlantingUI):
         super(FastPlantingFrame, self).__init__(parent)
 
         #create a pubsub receiver
-        Publisher = pub.Publisher()
-        Publisher.subscribe(self.on_txtMain_update, 'update')
+        pub.subscribe(self.on_txtMain_update, 'update')
 
         # Open serial port
         self.Serial = serial.Serial()
@@ -49,7 +49,7 @@ class FastPlantingFrame(FastPlantingUI):
         #self.Xbee = ZigBee(self.Serial, callback=self.message_received)
         self.Xbee = ZigBee(self.Serial)
         
-        self.serialThread = XbeeThread(self.Serial, self.Xbee, Publisher)
+        self.serialThread = XbeeThread(self.Serial, self.Xbee)
 
     def __del__(self):
         global xbee_thread_exit_flag
@@ -210,12 +210,12 @@ class FastPlantingFrame(FastPlantingUI):
 
 class XbeeThread(threading.Thread):
 
-    def __init__(self, Serial, Xbee, Publish):
+    def __init__(self, Serial, Xbee):
         super(XbeeThread,self).__init__()
 
         self.Serial=Serial
         self.Xbee=Xbee
-        self.Publisher = Publish
+  
         print 'XbeeThread init.'
 
         self.start()
@@ -244,7 +244,7 @@ class XbeeThread(threading.Thread):
             text = 'H:' + humidity + ' Tr:' + temperature_room + ' Tw:' + temperature_water + ' ' + now_time
             #print text
             #wx.CallAfter(pub.sendMessage, 'update', text)
-            self.Publisher.sendMessage('update', text)
+            pub.sendMessage('update', text)
         except Exception, e:
             print e
             pass
