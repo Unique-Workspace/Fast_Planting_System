@@ -52,19 +52,19 @@
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout">
             <item>
-             <widget class="QPushButton" name="scanButton">
+             <widget class="QPushButton" name="button_open_serial">
+              <property name="text">
+               <string>连接</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="button_scan">
               <property name="text">
                <string>扫描</string>
               </property>
               <property name="checkable">
                <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="addButton">
-              <property name="text">
-               <string>添加</string>
               </property>
              </widget>
             </item>
@@ -107,12 +107,13 @@
     <property name="title">
      <string>操作</string>
     </property>
+    <addaction name="menu_config_serial"/>
     <addaction name="action_scan_node"/>
     <addaction name="action_5"/>
     <addaction name="separator"/>
     <addaction name="action_7"/>
     <addaction name="action_8"/>
-    <addaction name="action_exit"/>
+    <addaction name="menu_exit"/>
    </widget>
    <widget class="QMenu" name="menu_2">
     <property name="title">
@@ -169,7 +170,7 @@
     <string>配置另存为</string>
    </property>
   </action>
-  <action name="action_exit">
+  <action name="menu_exit">
    <property name="text">
     <string>退出</string>
    </property>
@@ -184,11 +185,16 @@
     <string>曲线视图</string>
    </property>
   </action>
+  <action name="menu_config_serial">
+   <property name="text">
+    <string>配置串口</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections>
   <connection>
-   <sender>action_exit</sender>
+   <sender>menu_exit</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>close()</slot>

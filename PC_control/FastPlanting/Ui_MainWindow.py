@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'UI_MainWindow.ui'
 #
-# Created: Thu May 22 20:02:53 2014
+# Created: Fri May 23 21:30:37 2014
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -56,13 +56,13 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.addWidget(self.listNodeWidget)
         self.horizontalLayout = QtGui.QHBoxLayout()
         self.horizontalLayout.setObjectName(_fromUtf8("horizontalLayout"))
-        self.scanButton = QtGui.QPushButton(self.editorBox)
-        self.scanButton.setCheckable(True)
-        self.scanButton.setObjectName(_fromUtf8("scanButton"))
-        self.horizontalLayout.addWidget(self.scanButton)
-        self.addButton = QtGui.QPushButton(self.editorBox)
-        self.addButton.setObjectName(_fromUtf8("addButton"))
-        self.horizontalLayout.addWidget(self.addButton)
+        self.button_open_serial = QtGui.QPushButton(self.editorBox)
+        self.button_open_serial.setObjectName(_fromUtf8("button_open_serial"))
+        self.horizontalLayout.addWidget(self.button_open_serial)
+        self.button_scan = QtGui.QPushButton(self.editorBox)
+        self.button_scan.setCheckable(True)
+        self.button_scan.setObjectName(_fromUtf8("button_scan"))
+        self.horizontalLayout.addWidget(self.button_scan)
         self.verticalLayout_2.addLayout(self.horizontalLayout)
         self.horizontalLayout_2.addLayout(self.verticalLayout_2)
         self.previewerBox = QtGui.QGroupBox(self.splitter)
@@ -106,18 +106,21 @@ class Ui_MainWindow(object):
         self.action_7.setObjectName(_fromUtf8("action_7"))
         self.action_8 = QtGui.QAction(MainWindow)
         self.action_8.setObjectName(_fromUtf8("action_8"))
-        self.action_exit = QtGui.QAction(MainWindow)
-        self.action_exit.setObjectName(_fromUtf8("action_exit"))
+        self.menu_exit = QtGui.QAction(MainWindow)
+        self.menu_exit.setObjectName(_fromUtf8("menu_exit"))
         self.action_10 = QtGui.QAction(MainWindow)
         self.action_10.setObjectName(_fromUtf8("action_10"))
         self.action_11 = QtGui.QAction(MainWindow)
         self.action_11.setObjectName(_fromUtf8("action_11"))
+        self.menu_config_serial = QtGui.QAction(MainWindow)
+        self.menu_config_serial.setObjectName(_fromUtf8("menu_config_serial"))
+        self.menu.addAction(self.menu_config_serial)
         self.menu.addAction(self.action_scan_node)
         self.menu.addAction(self.action_5)
         self.menu.addSeparator()
         self.menu.addAction(self.action_7)
         self.menu.addAction(self.action_8)
-        self.menu.addAction(self.action_exit)
+        self.menu.addAction(self.menu_exit)
         self.menu_2.addAction(self.action_3)
         self.menu_2.addAction(self.action_10)
         self.menu_2.addAction(self.action_11)
@@ -128,14 +131,14 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menu_3.menuAction())
 
         self.retranslateUi(MainWindow)
-        QtCore.QObject.connect(self.action_exit, QtCore.SIGNAL(_fromUtf8("triggered()")), MainWindow.close)
+        QtCore.QObject.connect(self.menu_exit, QtCore.SIGNAL(_fromUtf8("triggered()")), MainWindow.close)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow", None))
         self.editorBox.setTitle(_translate("MainWindow", "节点列表", None))
-        self.scanButton.setText(_translate("MainWindow", "扫描", None))
-        self.addButton.setText(_translate("MainWindow", "添加", None))
+        self.button_open_serial.setText(_translate("MainWindow", "连接", None))
+        self.button_scan.setText(_translate("MainWindow", "扫描", None))
         self.previewerBox.setTitle(_translate("MainWindow", "节点信息", None))
         self.menu.setTitle(_translate("MainWindow", "操作", None))
         self.menu_2.setTitle(_translate("MainWindow", "视图", None))
@@ -147,8 +150,18 @@ class Ui_MainWindow(object):
         self.action_5.setText(_translate("MainWindow", "增加节点", None))
         self.action_7.setText(_translate("MainWindow", "保存配置", None))
         self.action_8.setText(_translate("MainWindow", "配置另存为", None))
-        self.action_exit.setText(_translate("MainWindow", "退出", None))
+        self.menu_exit.setText(_translate("MainWindow", "退出", None))
         self.action_10.setText(_translate("MainWindow", "单独查看", None))
         self.action_11.setText(_translate("MainWindow", "曲线视图", None))
+        self.menu_config_serial.setText(_translate("MainWindow", "配置串口", None))
 
+
+if __name__ == "__main__":
+    import sys
+    app = QtGui.QApplication(sys.argv)
+    MainWindow = QtGui.QMainWindow()
+    ui = Ui_MainWindow()
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec_())
 
