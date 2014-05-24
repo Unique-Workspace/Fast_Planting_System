@@ -9,8 +9,9 @@ timonkun@gmail.com
 
 This is main program for Fast Planting System.
 
-下一步要做的：1、增加thread class
+下一步要做的：1、在窗体右侧显示节点数据信息
 2、广播扫描包，并接收反馈，显示在list中。
+3、窗体右侧显示多点数据信息
 
 """
 __author__ = 'lingkun'
@@ -69,6 +70,13 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         QtCore.QObject.connect(self.button_open_serial, QtCore.SIGNAL(_fromUtf8("clicked()")), self.open_serial)
         QtCore.QObject.connect(self.menu_config_serial, QtCore.SIGNAL(_fromUtf8("triggered()")), self.config_serial)
 
+        self.item_model = QtGui.QStandardItemModel(0, 2, self)
+        self.item_model.setHeaderData(0, QtCore.Qt.Horizontal, u"物理地址")
+        self.item_model.setHeaderData(1, QtCore.Qt.Horizontal, u"网络地址")
+
+        self.listTableView.setModel(self.item_model)
+
+        #self.listTableView.setColumnWidth()
         # define serial port
         self.serial = serial.Serial()
         self.serial_port = '/dev/ttyAMA0'
@@ -76,7 +84,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         # Create API object, which spawns a new thread
         self.xbee = ZigBee(self.serial)
 
-        self.xbee_thread = XbeeThread(self.serial, self.xbee)
+        self.xbee_thread = XbeeThread(self.serial, self.xbee, self)
         self.xbee_thread.xbee_thread_start()
 
         print 'FastPlantingFrame init.'
@@ -88,6 +96,8 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         self.xbee_thread.xbee_thread_stop()
         self.xbee_thread.wait()   # must call wait() to quit the xbee thread.
         print 'FastPlantingFrame del.'
+
+
 
     def scan_node(self):
         print 'scan_node.'
@@ -126,12 +136,16 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
 
 
 class XbeeThread(QtCore.QThread):
-    def __init__(self,  myserial, myxbee):
+    def __init__(self,  myserial, myxbee, mainwindow):
         super(XbeeThread, self).__init__()
 
         self.serial = myserial
         self.xbee = myxbee
+        self.ui_mainwindow = mainwindow
         self.abort = False
+        self.listrow = 0
+
+        self.addr_dict = {}
         print 'XbeeThread init.'
 
     def __del__(self):
@@ -148,14 +162,52 @@ class XbeeThread(QtCore.QThread):
         else:
             print 'stop do nothing.'
 
+    def update_listview(self, data):
+        # put the (addr_long, addr_short) to dictionary.
+        self.addr_dict[data[0]] = data[1]
+
+        # 如果找到item，更新到这一行; 如果没有，增加新行;如果有多行，全部删除，重新建一行(不应出现多行的情况)。
+        for item in self.ui_mainwindow.item_model.findItems(data[0]):
+            self.ui_mainwindow.item_model.setData(self.ui_mainwindow.item_model.index(item.row(), 0, QtCore.QModelIndex()), data[0])
+            self.ui_mainwindow.item_model.setData(self.ui_mainwindow.item_model.index(item.row(), 1, QtCore.QModelIndex()), data[1])
+            break
+        else:
+            #print 'else'
+            self.ui_mainwindow.item_model.insertRows(self.listrow, 1, QtCore.QModelIndex())
+            self.ui_mainwindow.item_model.setData(self.ui_mainwindow.item_model.index(self.listrow, 0, QtCore.QModelIndex()), data[0])
+            self.ui_mainwindow.item_model.setData(self.ui_mainwindow.item_model.index(self.listrow, 1, QtCore.QModelIndex()), data[1])
+
+    def message_received(self, data):
+        try:
+            orig_str = data['rf_data']  # dict assign to string
+            src_addr_long = data['source_addr_long']
+            src_addr_short = data['source_addr']
+            self.update_listview((src_addr_long.encode('hex'), src_addr_short.encode('hex')))
+        except Exception, e:    # Except for receive empty Rx data while sending Tx data.
+            print e
+            return
+        try:
+            '''数据结构：字符串类型 '湿度，温度，水温' '''
+            #print orig_str
+            text = orig_str.split(',')
+            humidity = text[0]
+            temperature_room = text[1]
+            temperature_water = text[2]
+            now_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+            text = 'H:' + humidity + ' Tr:' + temperature_room + ' Tw:' + temperature_water + ' ' + now_time
+            print text
+        except Exception, e:
+            print e
+            pass
+
     def run(self):
         while not self.abort:
-            print 'xbee thread run.'
+            #print 'xbee thread run.'
             try:
                 if self.serial.isOpen() and self.serial.inWaiting():
                     # print 'serial is ok'
                     data = self.xbee.wait_read_frame()
-                    #self.message_received(data)
+                    self.message_received(data)
 
                 time.sleep(1)
             except KeyboardInterrupt:

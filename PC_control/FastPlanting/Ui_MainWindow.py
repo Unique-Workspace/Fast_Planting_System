@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'UI_MainWindow.ui'
 #
-# Created: Fri May 23 21:30:37 2014
+# Created: Sat May 24 13:23:32 2014
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -46,14 +46,14 @@ class Ui_MainWindow(object):
         self.horizontalLayout_2.setObjectName(_fromUtf8("horizontalLayout_2"))
         self.verticalLayout_2 = QtGui.QVBoxLayout()
         self.verticalLayout_2.setObjectName(_fromUtf8("verticalLayout_2"))
-        self.listNodeWidget = QtGui.QListWidget(self.editorBox)
+        self.listTableView = QtGui.QTableView(self.editorBox)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.listNodeWidget.sizePolicy().hasHeightForWidth())
-        self.listNodeWidget.setSizePolicy(sizePolicy)
-        self.listNodeWidget.setObjectName(_fromUtf8("listNodeWidget"))
-        self.verticalLayout_2.addWidget(self.listNodeWidget)
+        sizePolicy.setHeightForWidth(self.listTableView.sizePolicy().hasHeightForWidth())
+        self.listTableView.setSizePolicy(sizePolicy)
+        self.listTableView.setObjectName(_fromUtf8("listTableView"))
+        self.verticalLayout_2.addWidget(self.listTableView)
         self.horizontalLayout = QtGui.QHBoxLayout()
         self.horizontalLayout.setObjectName(_fromUtf8("horizontalLayout"))
         self.button_open_serial = QtGui.QPushButton(self.editorBox)
