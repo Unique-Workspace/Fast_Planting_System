@@ -136,6 +136,11 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
 
 
 class XbeeThread(QtCore.QThread):
+    tempChanged = QtCore.pyqtSignal(float)
+    humiChanged = QtCore.pyqtSignal(float)
+    watertempChanged = QtCore.pyqtSignal(float)
+    ledChanged = QtCore.pyqtSignal(int)
+
     def __init__(self,  myserial, myxbee, mainwindow):
         super(XbeeThread, self).__init__()
 
@@ -144,6 +149,11 @@ class XbeeThread(QtCore.QThread):
         self.ui_mainwindow = mainwindow
         self.abort = False
         self.listrow = 0
+
+        self.tempChanged.connect(self.ui_mainwindow.tempLcd.display)
+        self.humiChanged.connect(self.ui_mainwindow.humiLcd.display)
+        self.watertempChanged.connect(self.ui_mainwindow.watertempLcd.display)
+        self.ledChanged.connect(self.ui_mainwindow.ledLcd.display)
 
         self.addr_dict = {}
         print 'XbeeThread init.'
@@ -162,6 +172,18 @@ class XbeeThread(QtCore.QThread):
         else:
             print 'stop do nothing.'
 
+    def update_clientdata(self, data):
+        humidity = data[0]
+        temperature_room = data[1]
+        temperature_water = data[2]
+        now_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+        text = 'H:' + humidity + ' Tr:' + temperature_room + ' Tw:' + temperature_water + ' ' + now_time
+
+        self.tempChanged.emit(string.atof(temperature_room))
+        self.humiChanged.emit(string.atof(humidity))
+        self.watertempChanged.emit(string.atof(temperature_water))
+        print text
+
     def update_listview(self, data):
         # put the (addr_long, addr_short) to dictionary.
         self.addr_dict[data[0]] = data[1]
@@ -179,7 +201,6 @@ class XbeeThread(QtCore.QThread):
 
     def message_received(self, data):
         try:
-            orig_str = data['rf_data']  # dict assign to string
             src_addr_long = data['source_addr_long']
             src_addr_short = data['source_addr']
             self.update_listview((src_addr_long.encode('hex'), src_addr_short.encode('hex')))
@@ -188,17 +209,12 @@ class XbeeThread(QtCore.QThread):
             return
         try:
             '''数据结构：字符串类型 '湿度，温度，水温' '''
-            #print orig_str
+            orig_str = data['rf_data']  # dict assign to string
             text = orig_str.split(',')
-            humidity = text[0]
-            temperature_room = text[1]
-            temperature_water = text[2]
-            now_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
-            text = 'H:' + humidity + ' Tr:' + temperature_room + ' Tw:' + temperature_water + ' ' + now_time
-            print text
+            self.update_clientdata(text)
         except Exception, e:
             print e
-            pass
+            return
 
     def run(self):
         while not self.abort:

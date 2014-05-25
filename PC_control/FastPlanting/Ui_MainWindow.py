@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'UI_MainWindow.ui'
 #
-# Created: Sat May 24 13:23:32 2014
+# Created: Sun May 25 21:57:23 2014
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(904, 726)
+        MainWindow.resize(900, 700)
         self.centralwidget = QtGui.QWidget(MainWindow)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.horizontalLayout_4 = QtGui.QHBoxLayout(self.centralwidget)
@@ -72,15 +72,35 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(self.previewerBox.sizePolicy().hasHeightForWidth())
         self.previewerBox.setSizePolicy(sizePolicy)
         self.previewerBox.setObjectName(_fromUtf8("previewerBox"))
-        self.horizontalLayout_3 = QtGui.QHBoxLayout(self.previewerBox)
-        self.horizontalLayout_3.setObjectName(_fromUtf8("horizontalLayout_3"))
-        self.columnView = QtGui.QColumnView(self.previewerBox)
-        self.columnView.setObjectName(_fromUtf8("columnView"))
-        self.horizontalLayout_3.addWidget(self.columnView)
+        self.formLayout = QtGui.QFormLayout(self.previewerBox)
+        self.formLayout.setObjectName(_fromUtf8("formLayout"))
+        self.splitter_2 = QtGui.QSplitter(self.previewerBox)
+        self.splitter_2.setOrientation(QtCore.Qt.Horizontal)
+        self.splitter_2.setObjectName(_fromUtf8("splitter_2"))
+        self.label = QtGui.QLabel(self.splitter_2)
+        self.label.setObjectName(_fromUtf8("label"))
+        self.tempLcd = QtGui.QLCDNumber(self.splitter_2)
+        self.tempLcd.setMinimumSize(QtCore.QSize(70, 30))
+        self.tempLcd.setObjectName(_fromUtf8("tempLcd"))
+        self.label_2 = QtGui.QLabel(self.splitter_2)
+        self.label_2.setObjectName(_fromUtf8("label_2"))
+        self.humiLcd = QtGui.QLCDNumber(self.splitter_2)
+        self.humiLcd.setObjectName(_fromUtf8("humiLcd"))
+        self.label_3 = QtGui.QLabel(self.splitter_2)
+        self.label_3.setObjectName(_fromUtf8("label_3"))
+        self.watertempLcd = QtGui.QLCDNumber(self.splitter_2)
+        self.watertempLcd.setObjectName(_fromUtf8("watertempLcd"))
+        self.label_4 = QtGui.QLabel(self.splitter_2)
+        self.label_4.setObjectName(_fromUtf8("label_4"))
+        self.ledLcd = QtGui.QLCDNumber(self.splitter_2)
+        self.ledLcd.setObjectName(_fromUtf8("ledLcd"))
+        self.pushButton_setting = QtGui.QPushButton(self.splitter_2)
+        self.pushButton_setting.setObjectName(_fromUtf8("pushButton_setting"))
+        self.formLayout.setWidget(0, QtGui.QFormLayout.FieldRole, self.splitter_2)
         self.horizontalLayout_4.addWidget(self.splitter)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 904, 23))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 900, 23))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menu = QtGui.QMenu(self.menubar)
         self.menu.setObjectName(_fromUtf8("menu"))
@@ -140,6 +160,11 @@ class Ui_MainWindow(object):
         self.button_open_serial.setText(_translate("MainWindow", "连接", None))
         self.button_scan.setText(_translate("MainWindow", "扫描", None))
         self.previewerBox.setTitle(_translate("MainWindow", "节点信息", None))
+        self.label.setText(_translate("MainWindow", "温度：", None))
+        self.label_2.setText(_translate("MainWindow", "湿度：", None))
+        self.label_3.setText(_translate("MainWindow", "水温：", None))
+        self.label_4.setText(_translate("MainWindow", "灯：", None))
+        self.pushButton_setting.setText(_translate("MainWindow", "设置", None))
         self.menu.setTitle(_translate("MainWindow", "操作", None))
         self.menu_2.setTitle(_translate("MainWindow", "视图", None))
         self.menu_3.setTitle(_translate("MainWindow", "帮助", None))
