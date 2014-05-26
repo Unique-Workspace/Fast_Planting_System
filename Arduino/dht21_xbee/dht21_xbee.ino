@@ -326,7 +326,7 @@ void loop()
   else
   {
     tx_send_flag_count++;
-    if(tx_send_flag_count>2)
+    if(tx_send_flag_count>15)
     {
       tx_send_flag = true;
     }
@@ -336,7 +336,7 @@ void loop()
   //delay(200);
   // after sending a tx request, we expect a status response
   // wait up to half second for the status response
-  if (xbee.readPacket(200)) {
+  if (xbee.readPacket(500)) {
     // got a response!
     mySerial.print("got a response!\n");
     // should be a znet tx status            	

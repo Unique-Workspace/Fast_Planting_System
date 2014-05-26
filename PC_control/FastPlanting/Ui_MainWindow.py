@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'UI_MainWindow.ui'
 #
-# Created: Sun May 25 21:57:23 2014
+# Created: Mon May 26 23:17:05 2014
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -81,18 +81,28 @@ class Ui_MainWindow(object):
         self.label.setObjectName(_fromUtf8("label"))
         self.tempLcd = QtGui.QLCDNumber(self.splitter_2)
         self.tempLcd.setMinimumSize(QtCore.QSize(70, 30))
+        self.tempLcd.setDigitCount(5)
+        self.tempLcd.setSegmentStyle(QtGui.QLCDNumber.Filled)
         self.tempLcd.setObjectName(_fromUtf8("tempLcd"))
         self.label_2 = QtGui.QLabel(self.splitter_2)
         self.label_2.setObjectName(_fromUtf8("label_2"))
         self.humiLcd = QtGui.QLCDNumber(self.splitter_2)
+        self.humiLcd.setNumDigits(5)
+        self.humiLcd.setDigitCount(5)
+        self.humiLcd.setSegmentStyle(QtGui.QLCDNumber.Filled)
         self.humiLcd.setObjectName(_fromUtf8("humiLcd"))
         self.label_3 = QtGui.QLabel(self.splitter_2)
         self.label_3.setObjectName(_fromUtf8("label_3"))
         self.watertempLcd = QtGui.QLCDNumber(self.splitter_2)
+        self.watertempLcd.setFrameShadow(QtGui.QFrame.Raised)
+        self.watertempLcd.setSmallDecimalPoint(False)
+        self.watertempLcd.setDigitCount(5)
+        self.watertempLcd.setSegmentStyle(QtGui.QLCDNumber.Filled)
         self.watertempLcd.setObjectName(_fromUtf8("watertempLcd"))
         self.label_4 = QtGui.QLabel(self.splitter_2)
         self.label_4.setObjectName(_fromUtf8("label_4"))
         self.ledLcd = QtGui.QLCDNumber(self.splitter_2)
+        self.ledLcd.setDigitCount(1)
         self.ledLcd.setObjectName(_fromUtf8("ledLcd"))
         self.pushButton_setting = QtGui.QPushButton(self.splitter_2)
         self.pushButton_setting.setObjectName(_fromUtf8("pushButton_setting"))

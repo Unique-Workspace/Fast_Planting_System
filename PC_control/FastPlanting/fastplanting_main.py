@@ -19,6 +19,7 @@ __author__ = 'lingkun'
 from PyQt4 import QtCore, QtGui
 from UI_MainWindow import Ui_MainWindow
 from UI_SerialDialog import Ui_SerialDialog
+from UI_ConfigDialog import Ui_ConfigDialog
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -33,14 +34,163 @@ import time
 
 BROADCAST_ADDR_LONG = b'\x00\x00\x00\x00\x00\x00\xff\xff'
 BROADCAST_ADDR_SHORT = b'\xff\xfe'
+R1_ADDR_LONG = b'\x00\x13\xA2\x00\x40\xB4\x10\x3b'
+R1_ADDR_SHORT = b'\xff\xfe'
+
+class ConfigDialogFrame(QtGui.QDialog, Ui_ConfigDialog):
+    def __init__(self, Serial, Xbee):
+        super(ConfigDialogFrame, self).__init__()
+
+        self.setupUi(self)
+
+        self.spinBox_tmax.setValue(30.0)
+        self.spinBox_tmin.setValue(20.0)
+        self.spinBox_tmax.setRange(10.0, 50.0)
+        self.spinBox_tmin.setRange(10.0, 50.0)
+
+        self.spinBox_hmax.setValue(100.0)
+        self.spinBox_hmin.setValue(90.0)
+        self.spinBox_hmax.setRange(50.0, 100.0)
+        self.spinBox_hmin.setRange(50.0, 100.0)
+
+        self.spinBox_wtmax.setValue(35.0)
+        self.spinBox_wtmin.setValue(20.0)
+        self.spinBox_wtmax.setRange(10.0, 50.0)
+        self.spinBox_wtmin.setRange(10.0, 50.0)
+
+        QtCore.QObject.connect(self.pushButton_config, QtCore.SIGNAL(_fromUtf8("clicked()")), self.set_config)
+        QtCore.QObject.connect(self.pushButton_close, QtCore.SIGNAL(_fromUtf8("clicked()")), self.close_config)
+
+        self.serial = Serial
+        self.xbee = Xbee
+        print 'ConfigDialogFrame init.'
+
+    def __del__(self):
+        print 'ConfigDialogFrame del.'
+
+    def close_config(self):
+        self.reject()
+
+    def set_config(self):
+        print self.spinBox_tmin.value()
+        print self.spinBox_tmax.value()
+        print self.spinBox_hmin.value()
+        print self.spinBox_hmax.value()
+        print self.spinBox_wtmin.value()
+        print self.spinBox_wtmax.value()
+        tempra_min = self.spinBox_tmin.value()
+        tempra_max = self.spinBox_tmax.value()
+        if tempra_min < 0 or tempra_min > 50:
+            print '[Error]TempMin out of range: ' + tempra_min
+            return
+        if tempra_max < 0 or tempra_max > 50:
+            print '[Error]TempMax out of range: ' + tempra_max
+            return
+        if tempra_max < tempra_min:
+            print '[Error]TempMax < TempMin'
+            return
+
+        tempra_min_data = 'TRmin:' + str(tempra_min)
+        tempra_max_data = 'TRmax:' + str(tempra_max)
+        print tempra_min_data
+        try:
+            # Send Tx packet Temperature min
+            if self.serial.isOpen():
+                self.xbee.send('tx', frame_id='A', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(tempra_min_data))
+
+            # Wait for response
+            #if self.Serial.isOpen() and self.Serial.inWaiting():
+            #    response = self.Xbee.wait_read_frame()
+            #    print response
+
+            # Send Tx packet Temperature max
+            if self.serial.isOpen():
+                self.xbee.send('tx', frame_id='B', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(tempra_max_data))
+
+            # Wait for response
+            #if self.Serial.isOpen() and self.Serial.inWaiting():
+            #    response = self.Xbee.wait_read_frame()
+            #    print response
+        except Exception, e:
+                print '[Error]set_config() Transfer Fail!!', e
+
+        humi_min = self.spinBox_hmin.value()
+        humi_max = self.spinBox_hmax.value()
+        if humi_min < 0 or humi_min > 100:
+            print '[Error]HumMin out of range: ' + humi_min
+            return
+        if humi_max < 0 or humi_max > 100:
+            print '[Error]HumMax out of range: ' + humi_max
+            return
+        if humi_max < humi_min:
+            print '[Error]HumMax < HumMin'
+            return
+        humi_min_data = 'Hmin:' + str(humi_min)
+        humi_max_data = 'Hmax:' + str(humi_max)
+        try:
+            # Send Tx packet Humidity min
+            if self.serial.isOpen():
+                self.xbee.send('tx', frame_id='C', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(humi_min_data))
+
+            # Wait for response
+            #if self.Serial.isOpen() and self.Serial.inWaiting():
+            #    response = self.Xbee.wait_read_frame()
+            #    print response
+
+            # Send Tx packet Humidity max
+            if self.serial.isOpen():
+                self.xbee.send('tx', frame_id='D', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(humi_max_data))
+
+            # Wait for response
+            #if self.Serial.isOpen() and self.Serial.inWaiting():
+            #    response = self.Xbee.wait_read_frame()
+            #    print response
+        except Exception, e:
+            print '[Error]set_config() Transfer Fail!!', e
+
+        temp_water_min = self.spinBox_wtmin.value()
+        temp_water_max = self.spinBox_wtmax.value()
+        if temp_water_min < 0 or temp_water_min > 50:
+            print '[Error]TempWaterMin out of range: ' + temp_water_min
+            return
+        if temp_water_max < 0 or temp_water_max > 50:
+            print '[Error]TempWaterMax out of range: ' + temp_water_max
+            return
+        if temp_water_max < temp_water_min:
+            print '[Error]TempWaterMax < TempWaterMin'
+            return
+        temp_water_min_data = 'TWmin:' + str(temp_water_min)
+        temp_water_max_data = 'TWmax:' + str(temp_water_max)
+        try:
+            # Send Tx packet Humidity min
+            if self.serial.isOpen():
+                self.xbee.send('tx', frame_id='E', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(temp_water_min_data))
+
+            # Wait for response
+            #if self.Serial.isOpen() and self.Serial.inWaiting():
+            #    response = self.Xbee.wait_read_frame()
+            #    print response
+
+            # Send Tx packet Humidity max
+            if self.serial.isOpen():
+                self.xbee.send('tx', frame_id='F', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(temp_water_max_data))
+
+            # Wait for response
+            #if self.Serial.isOpen() and self.Serial.inWaiting():
+            #    response = self.Xbee.wait_read_frame()
+            #    print response
+        except Exception, e:
+            print '[Error]set_config() Transfer Fail!!', e
+
 
 class SerialDialogFrame(QtGui.QDialog, Ui_SerialDialog):
     def __init__(self, serial_port=None, baund_rate=None):
         super(SerialDialogFrame, self).__init__()
 
+        self.setupUi(self)
+
         self.serialport = serial_port
         self.baundrate = baund_rate
-        self.setupUi(self)
         self.comboBox_Serial.setEditText(serial_port)
         self.comboBox_BaundRate.setEditText(str(baund_rate))
         QtCore.QObject.connect(self.pushButton_confirm, QtCore.SIGNAL(_fromUtf8("clicked()")), self.set_serial_config)
@@ -69,6 +219,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         QtCore.QObject.connect(self.button_scan, QtCore.SIGNAL(_fromUtf8("clicked()")), self.scan_node)
         QtCore.QObject.connect(self.button_open_serial, QtCore.SIGNAL(_fromUtf8("clicked()")), self.open_serial)
         QtCore.QObject.connect(self.menu_config_serial, QtCore.SIGNAL(_fromUtf8("triggered()")), self.config_serial)
+        QtCore.QObject.connect(self.pushButton_setting, QtCore.SIGNAL(_fromUtf8("clicked()")), self.open_configdialog)
 
         self.item_model = QtGui.QStandardItemModel(0, 2, self)
         self.item_model.setHeaderData(0, QtCore.Qt.Horizontal, u"物理地址")
@@ -134,12 +285,17 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
                 pass
             self.button_open_serial.setText(u"连接")
 
+    def open_configdialog(self):
+        config_dialog = ConfigDialogFrame(self.serial, self.xbee)
+        ret = config_dialog.exec_()
+        print 'open_configdialog done.'
+
 
 class XbeeThread(QtCore.QThread):
-    tempChanged = QtCore.pyqtSignal(float)
-    humiChanged = QtCore.pyqtSignal(float)
-    watertempChanged = QtCore.pyqtSignal(float)
-    ledChanged = QtCore.pyqtSignal(int)
+    tempChanged = QtCore.pyqtSignal(str)
+    humiChanged = QtCore.pyqtSignal(str)
+    watertempChanged = QtCore.pyqtSignal(str)
+    ledChanged = QtCore.pyqtSignal(str)
 
     def __init__(self,  myserial, myxbee, mainwindow):
         super(XbeeThread, self).__init__()
@@ -173,16 +329,17 @@ class XbeeThread(QtCore.QThread):
             print 'stop do nothing.'
 
     def update_clientdata(self, data):
-        humidity = data[0]
-        temperature_room = data[1]
-        temperature_water = data[2]
+        humidity = '%4.2f' % float(data[0])
+        temperature_room = '%4.2f' % float(data[1])
+        temperature_water = '%4.2f' % float(data[2])
         now_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
         text = 'H:' + humidity + ' Tr:' + temperature_room + ' Tw:' + temperature_water + ' ' + now_time
-
-        self.tempChanged.emit(string.atof(temperature_room))
-        self.humiChanged.emit(string.atof(humidity))
-        self.watertempChanged.emit(string.atof(temperature_water))
         print text
+
+        self.tempChanged.emit(temperature_room)
+        self.humiChanged.emit(humidity)
+        self.watertempChanged.emit(temperature_water)
+
 
     def update_listview(self, data):
         # put the (addr_long, addr_short) to dictionary.
