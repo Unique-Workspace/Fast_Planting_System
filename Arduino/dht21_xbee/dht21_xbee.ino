@@ -7,6 +7,7 @@
 #include <XBee.h>
 #include <SoftwareSerial.h>
 #include <stdlib.h> // for dtostrf()
+#include <string.h> // for strtok()
 
 #include <OneWire.h>
 #include <DallasTemperature.h>
@@ -22,6 +23,8 @@
 /* DATA AREA BEGIN */
 #define TIME_DELAY  300
 #define LENGTH 20
+#define BUFLEN 64
+#define PARAMNUM 6
 // MAX data payload: 32*7 + 19 = 243  bytes
 uint8_t payload[LENGTH];
 uint8_t str_temperature[7];
@@ -176,74 +179,95 @@ void water_func(double water_temperature)
 // parse the Rx payload data. get the temperature and humidity value from the packets.
 void parse_rxdata(char rx_data[])
 {
-  int i, j;
+  int i, j, k;
   char strKey[8];
   char strNum[8];
+  static char strData[BUFLEN];
+  static char strSubData[PARAMNUM][BUFLEN];
   
-  mySerial.println(rx_data);
-  for(i = 0, j = 0; rx_data[i] != ':'; i++, j++)
-  {
-    strKey[j] = rx_data[i];
-  }
-  strKey[j++] = ':';
-  strKey[j++] = '\0';
-  String stringKey = strKey;
-  mySerial.println(stringKey);
+  //mySerial.println(rx_data);
   
-  // j<6 cut off extral chars.it will cause arduino reset.
-  for(i++, j = 0; rx_data[i] != '\0' && j<6; i++, j++)
+  for(i=0; i<strlen(rx_data); i++)
   {
-    strNum[j] = rx_data[i];
+    strData[i] = rx_data[i];
   }
-  strNum[j++] = '\0';
+  strData[i] = '\0';
+  //mySerial.println(strData);
   
-  if(stringKey.compareTo(humi_min_key))
+  // split the string "TRmin:20.0,TRmax:30.0,Hmin:90.0,Hmax:100.0,TWmin:20.0,TWmax:35.0"
+  char *ptr = strtok(strData,",");
+  for(j = 0; j<PARAMNUM && ptr != NULL; j++)
   {
-    humi_min = strtod((const char *)strNum, NULL);
-    mySerial.println(humi_min);
-    tx_send_flag = false;
-    tx_send_flag_count = 0;
+     strcpy(strSubData[j], ptr);  // save the string to strSubData[][]
+     ptr = strtok(NULL, ","); 
   }
-  else if(stringKey.compareTo(humi_max_key))
+
+  // extract the params from each string strSubData[][].
+  for(k=0; k<PARAMNUM; k++)
   {
-    humi_max = strtod((const char *)strNum, NULL);
-    mySerial.println(humi_max);
-    tx_send_flag = false;
-    tx_send_flag_count = 0;
+    for(i = 0, j = 0; strSubData[k][i] != ':'; i++, j++)
+    {
+      strKey[j] = strSubData[k][i];
+    }
+    strKey[j++] = ':';
+    strKey[j++] = '\0';
+    String stringKey = strKey;
+    mySerial.println(stringKey);
+    
+    // j<6 cut off extral chars.it will cause arduino reset.
+    for(i++, j = 0; strSubData[k][i] != '\0' && j<6; i++, j++)
+    {
+      strNum[j] = strSubData[k][i];
+    }
+    strNum[j++] = '\0';
+    
+    if(stringKey.compareTo(humi_min_key))
+    {
+      humi_min = strtod((const char *)strNum, NULL);
+      mySerial.println(humi_min);
+      tx_send_flag = false;
+      tx_send_flag_count = 0;
+    }
+    else if(stringKey.compareTo(humi_max_key))
+    {
+      humi_max = strtod((const char *)strNum, NULL);
+      mySerial.println(humi_max);
+      tx_send_flag = false;
+      tx_send_flag_count = 0;
+    }
+    else if(stringKey.compareTo(temp_room_min_key))
+    {
+      temp_room_min = strtod((const char *)strNum, NULL);
+      mySerial.println(temp_room_min);
+      tx_send_flag = false;
+      tx_send_flag_count = 0;
+    }
+    else if(stringKey.compareTo(temp_room_max_key))
+    {
+      temp_room_max = strtod((const char *)strNum, NULL);
+      mySerial.println(temp_room_max);
+      tx_send_flag = false;
+      tx_send_flag_count = 0;
+    }
+    else if(stringKey.compareTo(temp_water_min_key))
+    {
+      temp_water_min = strtod((const char *)strNum, NULL);
+      mySerial.println(temp_water_min);
+      tx_send_flag = false;
+      tx_send_flag_count = 0;
+    }
+    else if(stringKey.compareTo(temp_water_max_key))
+    {
+      temp_water_max = strtod((const char *)strNum, NULL);
+      mySerial.println(temp_water_max);
+      tx_send_flag = false;
+      tx_send_flag_count = 0;
+    }
+    else
+    {
+      mySerial.println("[ERROR] parse_rxdata() not found: " + stringKey);
+    }
   }
-  else if(stringKey.compareTo(temp_room_min_key))
-  {
-    temp_room_min = strtod((const char *)strNum, NULL);
-    mySerial.println(temp_room_min);
-    tx_send_flag = false;
-    tx_send_flag_count = 0;
-  }
-  else if(stringKey.compareTo(temp_room_max_key))
-  {
-    temp_room_max = strtod((const char *)strNum, NULL);
-    mySerial.println(temp_room_max);
-    tx_send_flag = false;
-    tx_send_flag_count = 0;
-  }
-  else if(stringKey.compareTo(temp_water_min_key))
-  {
-    temp_water_min = strtod((const char *)strNum, NULL);
-    mySerial.println(temp_water_min);
-    tx_send_flag = false;
-    tx_send_flag_count = 0;
-  }
-  else if(stringKey.compareTo(temp_water_max_key))
-  {
-    temp_water_max = strtod((const char *)strNum, NULL);
-    mySerial.println(temp_water_max);
-    tx_send_flag = false;
-    tx_send_flag_count = 0;
-  }
-  else
-  {
-    mySerial.println("[ERROR] parse_rxdata() not found: " + stringKey);
-  }
-  
 }
 
 void setup()
@@ -274,8 +298,8 @@ void loop()
 {
   int i, j;
   double water_tempe;
-  char rx_data[64];
-  
+  char rx_data[BUFLEN];
+
   // READ DATA
   //mySerial.print("DHT21, \t");
   int chk = DHT.read22(DHT11_PIN);
@@ -326,19 +350,19 @@ void loop()
   else
   {
     tx_send_flag_count++;
-    if(tx_send_flag_count>15)
+    if(tx_send_flag_count>5)
     {
       tx_send_flag = true;
     }
   }
-  
+
   // RECEIVE DATA
-  //delay(200);
+  //delay(500);
   // after sending a tx request, we expect a status response
   // wait up to half second for the status response
   if (xbee.readPacket(500)) {
     // got a response!
-    mySerial.print("got a response!\n");
+    mySerial.println("got a response!");
     // should be a znet tx status            	
     if (xbee.getResponse().getApiId() == ZB_TX_STATUS_RESPONSE) {
       xbee.getResponse().getZBTxStatusResponse(txStatus);
@@ -346,10 +370,10 @@ void loop()
       // get the delivery status, the fifth byte
       if (txStatus.getDeliveryStatus() == SUCCESS) {
         // success.  time to celebrate
-        mySerial.print("success.\n");
+        mySerial.println("success.");
       } else {
         // the remote XBee did not receive our packet. is it powered on?
-        mySerial.print("the remote XBee did not receive our packet\n");
+        mySerial.println("the remote XBee did not receive our packet");
       }
     }
     else if(xbee.getResponse().getApiId() == ZB_RX_RESPONSE) {
@@ -400,7 +424,7 @@ void loop()
     mySerial.println(xbee.getResponse().getErrorCode());
   } else {
     // local XBee did not provide a timely TX Status Response -- should not happen
-    mySerial.print("No TX Status Response\n");
+    mySerial.println("No TX Status Response");
   
   }
 

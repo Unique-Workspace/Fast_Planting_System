@@ -29,7 +29,7 @@ except AttributeError:
 
 from xbee import ZigBee
 import serial
-import sys,string
+import sys, string
 import time
 
 BROADCAST_ADDR_LONG = b'\x00\x00\x00\x00\x00\x00\xff\xff'
@@ -92,27 +92,6 @@ class ConfigDialogFrame(QtGui.QDialog, Ui_ConfigDialog):
 
         tempra_min_data = 'TRmin:' + str(tempra_min)
         tempra_max_data = 'TRmax:' + str(tempra_max)
-        print tempra_min_data
-        try:
-            # Send Tx packet Temperature min
-            if self.serial.isOpen():
-                self.xbee.send('tx', frame_id='A', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(tempra_min_data))
-
-            # Wait for response
-            #if self.Serial.isOpen() and self.Serial.inWaiting():
-            #    response = self.Xbee.wait_read_frame()
-            #    print response
-
-            # Send Tx packet Temperature max
-            if self.serial.isOpen():
-                self.xbee.send('tx', frame_id='B', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(tempra_max_data))
-
-            # Wait for response
-            #if self.Serial.isOpen() and self.Serial.inWaiting():
-            #    response = self.Xbee.wait_read_frame()
-            #    print response
-        except Exception, e:
-                print '[Error]set_config() Transfer Fail!!', e
 
         humi_min = self.spinBox_hmin.value()
         humi_max = self.spinBox_hmax.value()
@@ -127,26 +106,6 @@ class ConfigDialogFrame(QtGui.QDialog, Ui_ConfigDialog):
             return
         humi_min_data = 'Hmin:' + str(humi_min)
         humi_max_data = 'Hmax:' + str(humi_max)
-        try:
-            # Send Tx packet Humidity min
-            if self.serial.isOpen():
-                self.xbee.send('tx', frame_id='C', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(humi_min_data))
-
-            # Wait for response
-            #if self.Serial.isOpen() and self.Serial.inWaiting():
-            #    response = self.Xbee.wait_read_frame()
-            #    print response
-
-            # Send Tx packet Humidity max
-            if self.serial.isOpen():
-                self.xbee.send('tx', frame_id='D', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(humi_max_data))
-
-            # Wait for response
-            #if self.Serial.isOpen() and self.Serial.inWaiting():
-            #    response = self.Xbee.wait_read_frame()
-            #    print response
-        except Exception, e:
-            print '[Error]set_config() Transfer Fail!!', e
 
         temp_water_min = self.spinBox_wtmin.value()
         temp_water_max = self.spinBox_wtmax.value()
@@ -161,26 +120,22 @@ class ConfigDialogFrame(QtGui.QDialog, Ui_ConfigDialog):
             return
         temp_water_min_data = 'TWmin:' + str(temp_water_min)
         temp_water_max_data = 'TWmax:' + str(temp_water_max)
+
+        send_data = tempra_min_data + ',' + tempra_max_data + ',' + humi_min_data + ',' + humi_max_data + ',' + \
+            temp_water_min_data + ',' + temp_water_max_data
+        print send_data
         try:
-            # Send Tx packet Humidity min
+            # Send Tx packet Temperature min
             if self.serial.isOpen():
-                self.xbee.send('tx', frame_id='E', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(temp_water_min_data))
-
-            # Wait for response
-            #if self.Serial.isOpen() and self.Serial.inWaiting():
-            #    response = self.Xbee.wait_read_frame()
-            #    print response
-
-            # Send Tx packet Humidity max
-            if self.serial.isOpen():
-                self.xbee.send('tx', frame_id='F', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT, data=str(temp_water_max_data))
+                self.xbee.send('tx', frame_id='A', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT,
+                               data=str(send_data))
 
             # Wait for response
             #if self.Serial.isOpen() and self.Serial.inWaiting():
             #    response = self.Xbee.wait_read_frame()
             #    print response
         except Exception, e:
-            print '[Error]set_config() Transfer Fail!!', e
+                print '[Error]set_config() Transfer Fail!!', e
 
 
 class SerialDialogFrame(QtGui.QDialog, Ui_SerialDialog):
@@ -378,8 +333,9 @@ class XbeeThread(QtCore.QThread):
             #print 'xbee thread run.'
             try:
                 if self.serial.isOpen() and self.serial.inWaiting():
-                    # print 'serial is ok'
+
                     data = self.xbee.wait_read_frame()
+                    print data
                     self.message_received(data)
 
                 time.sleep(1)
