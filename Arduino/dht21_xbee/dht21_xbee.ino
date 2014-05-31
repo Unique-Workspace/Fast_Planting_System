@@ -8,6 +8,7 @@
 #include <SoftwareSerial.h>
 #include <stdlib.h> // for dtostrf()
 #include <string.h> // for strtok()
+#include <pt.h>  // for protothread
 
 #include <OneWire.h>
 #include <DallasTemperature.h>
@@ -21,39 +22,38 @@
 /* PIN DEFINE END */
 
 /* DATA AREA BEGIN */
-#define TIME_DELAY  300
+#define HUMIDITY_TIME_DELAY  300
 #define LENGTH 20
-#define BUFLEN 64
+#define BUFLEN 80
+#define SUB_BUFLEN 15
 #define PARAMNUM 6
 // MAX data payload: 32*7 + 19 = 243  bytes
-uint8_t payload[LENGTH];
-uint8_t str_temperature[7];
-uint8_t str_humidity[7];
-uint8_t str_water_tempe[7];
-uint8_t humi_delay = 0;
-double temp_room_min = 10;
-double temp_room_max = 30;
-double temp_water_min = 20;
-double temp_water_max = 30;
-double humi_min = 95;
-double humi_max = 99;
+static uint8_t payload[LENGTH];
+static uint8_t str_temperature[7];
+static uint8_t str_humidity[7];
+static uint8_t str_water_tempe[7];
+static uint8_t humi_delay = 0;
 
-String humi_min_key = "Hmin:";
-String humi_max_key = "Hmax:";
-String temp_room_min_key = "TRmin:";
-String temp_room_max_key = "TRmax:";
-String temp_water_min_key = "TWmin:";
-String temp_water_max_key = "TWmax:";
-
-bool tx_send_flag = true;
-int tx_send_flag_count = 0;
+static float temp_room_min;
+static float temp_room_max;
+static float temp_water_min;
+static float temp_water_max;
+static float humi_min;
+static float humi_max;
+    
+static const char *humi_min_key = "Hmin:";
+static const char * humi_max_key = "Hmax:";
+static const char * temp_room_min_key = "TRmin:";
+static const char * temp_room_max_key = "TRmax:";
+static const char * temp_water_min_key = "TWmin:";
+static const char * temp_water_max_key = "TWmax:";
   
-dht DHT;
+static dht DHT;
 /* DATA AREA END */
 
 /* XBEE STRUCTURE BEGIN */
 // create the XBee object
-XBee xbee = XBee();
+static XBee xbee = XBee();
 
 // SH + SL Address of receiving XBee
 XBeeAddress64 addr64 = XBeeAddress64(0x0013a200, 0x40b41060); //39
@@ -61,16 +61,16 @@ ZBTxRequest zbTx = ZBTxRequest(addr64, payload, sizeof(payload));
 ZBTxStatusResponse txStatus = ZBTxStatusResponse();
 
 // create reusable response objects for responses we expect to handle 
-ZBRxResponse rx = ZBRxResponse();
+static ZBRxResponse rx = ZBRxResponse();
 
 /* XBEE STRUCTURE END */
 
 /* SERIAL PORT BEGIN */
 // Define NewSoftSerial TX/RX pins
 // Connect Arduino pin 9 to TX of usb-serial device
-uint8_t ssRX = 10;
+static uint8_t ssRX = 10;
 // Connect Arduino pin 10 to RX of usb-serial device
-uint8_t ssTX = 11;
+static uint8_t ssTX = 11;
 // Remember to connect all devices to a common Ground: XBee, Arduino and USB-Serial device
 SoftwareSerial mySerial(ssRX, ssTX);
 /* SERIAL PORT END */
@@ -83,6 +83,10 @@ OneWire oneWire(ONE_WIRE_BUS);
 // Pass our oneWire reference to Dallas Temperature. 
 DallasTemperature water_sensor(&oneWire);
 /* 18b20 water sensor end */
+
+// for protothread.
+static int counter_send,counter_receive; //counter为定时计数器
+static struct pt pt_send, pt_receive; 
 
 void humidity_func(double humidity)
 {
@@ -104,7 +108,7 @@ void humidity_func(double humidity)
   {
     // ok
     mySerial.println("\t humidity >=99");
-    if(humi_delay > TIME_DELAY)
+    if(humi_delay > HUMIDITY_TIME_DELAY)
     {
       mySerial.println("\t TURN OFF humidity.");
       digitalWrite(HUMI_CTRL_PIN, LOW); 
@@ -176,23 +180,22 @@ void water_func(double water_temperature)
   }
 }
 
+static char strData[BUFLEN];
+static char strSubData[PARAMNUM][SUB_BUFLEN];
 // parse the Rx payload data. get the temperature and humidity value from the packets.
 void parse_rxdata(char rx_data[])
 {
-  int i, j, k;
-  char strKey[8];
-  char strNum[8];
-  static char strData[BUFLEN];
-  static char strSubData[PARAMNUM][BUFLEN];
-  
+    int i, j, k;
+    char strKey[8];
+    char strNum[8];
+    
   //mySerial.println(rx_data);
-  
   for(i=0; i<strlen(rx_data); i++)
   {
-    strData[i] = rx_data[i];
+      strData[i] = rx_data[i];
   }
   strData[i] = '\0';
-  //mySerial.println(strData);
+  mySerial.println(strData);
   
   // split the string "TRmin:20.0,TRmax:30.0,Hmin:90.0,Hmax:100.0,TWmin:20.0,TWmax:35.0"
   char *ptr = strtok(strData,",");
@@ -211,8 +214,6 @@ void parse_rxdata(char rx_data[])
     }
     strKey[j++] = ':';
     strKey[j++] = '\0';
-    String stringKey = strKey;
-    mySerial.println(stringKey);
     
     // j<6 cut off extral chars.it will cause arduino reset.
     for(i++, j = 0; strSubData[k][i] != '\0' && j<6; i++, j++)
@@ -220,222 +221,265 @@ void parse_rxdata(char rx_data[])
       strNum[j] = strSubData[k][i];
     }
     strNum[j++] = '\0';
-    
-    if(stringKey.compareTo(humi_min_key))
+
+    if(0 == strcmp(temp_room_min_key, strKey))
     {
-      humi_min = strtod((const char *)strNum, NULL);
-      mySerial.println(humi_min);
-      tx_send_flag = false;
-      tx_send_flag_count = 0;
-    }
-    else if(stringKey.compareTo(humi_max_key))
-    {
-      humi_max = strtod((const char *)strNum, NULL);
-      mySerial.println(humi_max);
-      tx_send_flag = false;
-      tx_send_flag_count = 0;
-    }
-    else if(stringKey.compareTo(temp_room_min_key))
-    {
-      temp_room_min = strtod((const char *)strNum, NULL);
+      temp_room_min = atof((const char *)strNum);
       mySerial.println(temp_room_min);
-      tx_send_flag = false;
-      tx_send_flag_count = 0;
     }
-    else if(stringKey.compareTo(temp_room_max_key))
+    else if(/*stringKey.compareTo(temp_room_max_key)*/0 == strcmp(temp_room_max_key, strKey))
     {
-      temp_room_max = strtod((const char *)strNum, NULL);
+      temp_room_max = atof((const char *)strNum);
       mySerial.println(temp_room_max);
-      tx_send_flag = false;
-      tx_send_flag_count = 0;
     }
-    else if(stringKey.compareTo(temp_water_min_key))
+    else if(0 == strcmp(humi_min_key, strKey))
     {
-      temp_water_min = strtod((const char *)strNum, NULL);
+      humi_min = atof((const char *)strNum);
+      mySerial.println(humi_min);
+    }
+    else if(0 == strcmp(humi_max_key, strKey))
+    {
+      humi_max = atof((const char *)strNum);
+      mySerial.println(humi_max);
+    }
+    else if(0 == strcmp(temp_water_min_key, strKey))
+    {
+      temp_water_min = atof((const char *)strNum);
       mySerial.println(temp_water_min);
-      tx_send_flag = false;
-      tx_send_flag_count = 0;
     }
-    else if(stringKey.compareTo(temp_water_max_key))
+    else if(0 == strcmp(temp_water_max_key, strKey))
     {
-      temp_water_max = strtod((const char *)strNum, NULL);
+      temp_water_max = atof((const char *)strNum);
       mySerial.println(temp_water_max);
-      tx_send_flag = false;
-      tx_send_flag_count = 0;
     }
     else
     {
-      mySerial.println("[ERROR] parse_rxdata() not found: " + stringKey);
+       mySerial.println("[ERROR] parse_rxdata() not found: " );
     }
   }
+
+      mySerial.println("+++++++++++++++++++++++++");
+      mySerial.println(temp_room_min);
+    mySerial.println(temp_room_max);
+    mySerial.println(humi_min);
+    mySerial.println(humi_max);
+    
+    mySerial.println(temp_water_min);
+    mySerial.println(temp_water_max);
+    mySerial.println("+++++++++++++++++++++++++");
 }
+
+void send_data()
+{
+
+    int i, j;
+    double water_tempe;
+
+    // READ DATA
+    //mySerial.print("DHT21, \t");
+    int chk = DHT.read22(DHT11_PIN);
+    switch (chk)
+    {
+        case 0:  mySerial.print("OK,\t"); break;
+        case -1: mySerial.print("Checksum error,\t"); break;
+        case -2: mySerial.print("Time out error,\t"); break;
+        default: mySerial.print("Unknown error,\t"); break;
+    }
+    // DISPLAT DATA
+    dtostrf(DHT.humidity, 3, 2, (char *)str_humidity);
+    dtostrf(DHT.temperature, 3, 2, (char *)str_temperature);
+    //mySerial.println(String((char *)str_humidity) + String((char *)str_temperature));
+  
+    water_sensor.requestTemperatures(); // Send the command to get temperatures
+    water_tempe = water_sensor.getTempCByIndex(0);
+    dtostrf(water_tempe, 3, 2, (char *)str_water_tempe);
+    //mySerial.print("Water temperature is: ");
+    //mySerial.println(water_tempe);
+
+    // SEND DATA
+    i=0;
+    for(j=0; i<7 && str_humidity[j]!=0; i++, j++)
+    {
+        payload[i]=str_humidity[j];
+    }
+    payload[i++] = ',';
+    for(j=0; j<7 && str_temperature[j]!=0; i++,j++)
+    {
+        payload[i] = str_temperature[j];
+    }
+    payload[i++] = ',';
+    for(j=0; j<7 && str_water_tempe[j]!=0; i++,j++)
+    {
+        payload[i] = str_water_tempe[j];
+    }
+    payload[i++] = ',';
+  
+    xbee.send(zbTx);
+
+      // HANDLE DATA
+    humidity_func(DHT.humidity);
+    temperature_func(DHT.temperature);
+    water_func(water_tempe);
+}
+
+/**
+#define NO_ERROR 0
+#define CHECKSUM_FAILURE 1
+#define PACKET_EXCEEDS_BYTE_ARRAY_LENGTH 2
+#define UNEXPECTED_START_BYTE 3
+**/
+
+void receive_data()
+{
+    int i;
+    char rx_data[BUFLEN];
+
+     // RECEIVE DATA
+    // after sending a tx request, we expect a status response
+    // wait up to half second for the status response
+    if (xbee.readPacket(200)) 
+    {
+        // got a response!
+        mySerial.println("got a response!");
+        // should be a znet tx status            	
+       if (xbee.getResponse().getApiId() == ZB_TX_STATUS_RESPONSE) 
+       {
+           xbee.getResponse().getZBTxStatusResponse(txStatus);
+
+           // get the delivery status, the fifth byte
+          if (txStatus.getDeliveryStatus() == SUCCESS) 
+          {
+              // success.  time to celebrate
+              mySerial.println("success.");
+          } 
+          else {
+              // the remote XBee did not receive our packet. is it powered on?
+              mySerial.println("the remote XBee did not receive our packet");
+          }
+       }
+       else if(xbee.getResponse().getApiId() == ZB_RX_RESPONSE) 
+       {
+          // got a zb rx packet
+          // now fill our zb rx class
+          xbee.getResponse().getZBRxResponse(rx);
+      
+          mySerial.println("Got an rx packet!");
+          if (rx.getOption() == ZB_PACKET_ACKNOWLEDGED) 
+          {
+              // the sender got an ACK
+            mySerial.println("packet acknowledged");
+          } 
+          else 
+          {
+              mySerial.println("packet not acknowledged");
+          }
+          /***
+          mySerial.print("checksum is ");
+          mySerial.println(rx.getChecksum(), HEX);
+
+          mySerial.print("packet length is ");
+          mySerial.println(rx.getPacketLength(), DEC);
+        
+          mySerial.print("data length is ");
+          mySerial.println(rx.getDataLength(), DEC);
+          ***/
+          for (i = 0; i < rx.getDataLength(); i++) 
+          {
+               /***
+              mySerial.print("payload [");
+              mySerial.print(i, DEC);
+              mySerial.print("] is ");
+              mySerial.println(rx.getData()[i], HEX);
+              ***/
+              rx_data[i] = rx.getData()[i];
+          }
+          rx_data[i++] = '\0';
+          parse_rxdata(rx_data);
+        
+          /***
+           for (i = 0; i < xbee.getResponse().getFrameDataLength(); i++) {
+            mySerial.print("frame data [");
+            mySerial.print(i, DEC);
+            mySerial.print("] is ");
+            mySerial.println(xbee.getResponse().getFrameData()[i], HEX);
+          }
+          ***/
+        }
+    } 
+    else if (xbee.getResponse().isError()) 
+    {
+        mySerial.print("Error reading packet.  Error code: ");  
+        mySerial.println(xbee.getResponse().getErrorCode());
+    } 
+    else 
+    {
+        // local XBee did not provide a timely TX Status Response -- should not happen
+        mySerial.println("No TX Status Response");
+    }
+}
+
+static int protothread_send(struct pt *pt) 
+{  
+    PT_BEGIN(pt);  
+    while(1) 
+    {  
+        PT_WAIT_UNTIL(pt, counter_send==10); 
+        send_data();
+        counter_send=0;   
+    } 
+    PT_END(pt); 
+} 
+ 
+ 
+static int protothread_receive(struct pt *pt) 
+{ 
+    PT_BEGIN(pt); 
+    while(1) 
+    {    
+        PT_WAIT_UNTIL(pt, counter_receive==1); 
+        receive_data();
+        counter_receive=0; 
+    } 
+    PT_END(pt); 
+} 
 
 void setup()
 {
-  Serial.begin(115200);
-  xbee.setSerial(Serial);
+    Serial.begin(115200);
+    xbee.setSerial(Serial);
   
-  while (!Serial) {
-    ; // wait for serial port to connect. Needed for Leonardo only
-  }
-  // set the data rate for the SoftwareSerial port
-  mySerial.begin(115200);
-  mySerial.println("DHT TEST PROGRAM for Fast Planting System");
-  mySerial.print("LIBRARY VERSION: ");
-  mySerial.println(DHT_LIB_VERSION);
-  mySerial.println();
-  mySerial.println("Type,\tstatus,\tHumidity (%),\tTemperature (C)");
-  mySerial.println("SW serial debug.");
+    while (!Serial) 
+    {
+        ; // wait for serial port to connect. Needed for Leonardo only
+    }
+    // set the data rate for the SoftwareSerial port
+    mySerial.begin(115200);
+    mySerial.println("DHT TEST PROGRAM for Fast Planting System");
+    mySerial.print("LIBRARY VERSION: ");
+    mySerial.println(DHT_LIB_VERSION);
+    mySerial.println();
+    mySerial.println("Type,\tstatus,\tHumidity (%),\tTemperature (C)");
+    mySerial.println("SW serial debug.");
   
-  pinMode(HUMI_CTRL_PIN, OUTPUT);
-  pinMode(WATER_CTRL_PIN, OUTPUT);
+    pinMode(HUMI_CTRL_PIN, OUTPUT);
+    pinMode(WATER_CTRL_PIN, OUTPUT);
 
-  // Start up the 18b20 water sensor library
-  water_sensor.begin();
+    // Start up the 18b20 water sensor library
+    water_sensor.begin();
+    PT_INIT(&pt_send);  //线程1初始化
+    PT_INIT(&pt_receive);  //线程2初始化
 }
+
+
 
 void loop()
 {
-  int i, j;
-  double water_tempe;
-  char rx_data[BUFLEN];
+    protothread_send(&pt_send); 
+    protothread_receive(&pt_receive); 
 
-  // READ DATA
-  //mySerial.print("DHT21, \t");
-  int chk = DHT.read22(DHT11_PIN);
-  switch (chk)
-  {
-    case 0:  mySerial.print("OK,\t"); break;
-    case -1: mySerial.print("Checksum error,\t"); break;
-    case -2: mySerial.print("Time out error,\t"); break;
-    default: mySerial.print("Unknown error,\t"); break;
-  }
-  // DISPLAT DATA
-  //mySerial.print(DHT.humidity,1);
-  //mySerial.print(",\t");
-  //mySerial.println(DHT.temperature,1);
-  
-  dtostrf(DHT.humidity, 3, 2, (char *)str_humidity);
-  dtostrf(DHT.temperature, 3, 2, (char *)str_temperature);
-  //mySerial.println(String((char *)str_humidity) + String((char *)str_temperature));
-  
-  water_sensor.requestTemperatures(); // Send the command to get temperatures
-  water_tempe = water_sensor.getTempCByIndex(0);
-  dtostrf(water_tempe, 3, 2, (char *)str_water_tempe);
-  //mySerial.print("Water temperature is: ");
-  //mySerial.println(water_tempe);
-  
-  // SEND DATA
-  i=0;
-  for(j=0; i<7 && str_humidity[j]!=0; i++, j++)
-  {
-    payload[i]=str_humidity[j];
-  }
-  payload[i++] = ',';
-  for(j=0; j<7 && str_temperature[j]!=0; i++,j++)
-  {
-    payload[i] = str_temperature[j];
-  }
-  payload[i++] = ',';
-  for(j=0; j<7 && str_water_tempe[j]!=0; i++,j++)
-  {
-    payload[i] = str_water_tempe[j];
-  }
-  payload[i++] = ',';
-  //mySerial.print((char *)payload);
-  if(tx_send_flag)
-  {
-    xbee.send(zbTx);
-  }
-  else
-  {
-    tx_send_flag_count++;
-    if(tx_send_flag_count>5)
-    {
-      tx_send_flag = true;
-    }
-  }
-
-  // RECEIVE DATA
-  //delay(500);
-  // after sending a tx request, we expect a status response
-  // wait up to half second for the status response
-  if (xbee.readPacket(500)) {
-    // got a response!
-    mySerial.println("got a response!");
-    // should be a znet tx status            	
-    if (xbee.getResponse().getApiId() == ZB_TX_STATUS_RESPONSE) {
-      xbee.getResponse().getZBTxStatusResponse(txStatus);
-
-      // get the delivery status, the fifth byte
-      if (txStatus.getDeliveryStatus() == SUCCESS) {
-        // success.  time to celebrate
-        mySerial.println("success.");
-      } else {
-        // the remote XBee did not receive our packet. is it powered on?
-        mySerial.println("the remote XBee did not receive our packet");
-      }
-    }
-    else if(xbee.getResponse().getApiId() == ZB_RX_RESPONSE) {
-        // got a zb rx packet
-        // now fill our zb rx class
-        xbee.getResponse().getZBRxResponse(rx);
-      
-        mySerial.println("Got an rx packet!");
-        if (rx.getOption() == ZB_PACKET_ACKNOWLEDGED) {
-            // the sender got an ACK
-            mySerial.println("packet acknowledged");
-        } else {
-          mySerial.println("packet not acknowledged");
-        }
-        /***
-        mySerial.print("checksum is ");
-        mySerial.println(rx.getChecksum(), HEX);
-
-        mySerial.print("packet length is ");
-        mySerial.println(rx.getPacketLength(), DEC);
-        
-        mySerial.print("data length is ");
-        mySerial.println(rx.getDataLength(), DEC);
-        ***/
-         for (i = 0; i < rx.getDataLength(); i++) {
-           /***
-          mySerial.print("payload [");
-          mySerial.print(i, DEC);
-          mySerial.print("] is ");
-          mySerial.println(rx.getData()[i], HEX);
-          ***/
-          rx_data[i] = rx.getData()[i];
-        }
-        rx_data[i++] = '\0';
-        parse_rxdata(rx_data);
-        
-        /***
-       for (i = 0; i < xbee.getResponse().getFrameDataLength(); i++) {
-        mySerial.print("frame data [");
-        mySerial.print(i, DEC);
-        mySerial.print("] is ");
-        mySerial.println(xbee.getResponse().getFrameData()[i], HEX);
-      }
-      ***/
-    }
-  } else if (xbee.getResponse().isError()) {
-    mySerial.print("Error reading packet.  Error code: ");  
-    mySerial.println(xbee.getResponse().getErrorCode());
-  } else {
-    // local XBee did not provide a timely TX Status Response -- should not happen
-    mySerial.println("No TX Status Response");
-  
-  }
-
-  // HANDLE DATA
-  humidity_func(DHT.humidity);
-  temperature_func(DHT.temperature);
-  water_func(water_tempe);
-
-  //delay(1000);
+    counter_send++; 
+    counter_receive++; 
 }
 //
 // END OF FILE
 //
-
