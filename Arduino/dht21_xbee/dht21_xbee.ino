@@ -289,7 +289,7 @@ void send_data()
     dtostrf(DHT.humidity, 3, 2, (char *)str_humidity);
     dtostrf(DHT.temperature, 3, 2, (char *)str_temperature);
     //mySerial.println(String((char *)str_humidity) + String((char *)str_temperature));
-  
+
     water_sensor.requestTemperatures(); // Send the command to get temperatures
     water_tempe = water_sensor.getTempCByIndex(0);
     dtostrf(water_tempe, 3, 2, (char *)str_water_tempe);

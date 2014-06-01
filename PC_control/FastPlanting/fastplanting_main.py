@@ -31,11 +31,13 @@ from xbee import ZigBee
 import serial
 import sys, string
 import time
+from database import RecordDb
 
 BROADCAST_ADDR_LONG = b'\x00\x00\x00\x00\x00\x00\xff\xff'
 BROADCAST_ADDR_SHORT = b'\xff\xfe'
 R1_ADDR_LONG = b'\x00\x13\xA2\x00\x40\xB4\x10\x3b'
 R1_ADDR_SHORT = b'\xff\xfe'
+
 
 class ConfigDialogFrame(QtGui.QDialog, Ui_ConfigDialog):
     def __init__(self, Serial, Xbee):
@@ -252,6 +254,7 @@ class XbeeThread(QtCore.QThread):
     watertempChanged = QtCore.pyqtSignal(str)
     ledChanged = QtCore.pyqtSignal(str)
 
+
     def __init__(self,  myserial, myxbee, mainwindow):
         super(XbeeThread, self).__init__()
 
@@ -283,6 +286,17 @@ class XbeeThread(QtCore.QThread):
         else:
             print 'stop do nothing.'
 
+    def update_database(self, addr_long, data, database):
+        dict_data = {}
+        now_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+        dict_data['node_id'] = str(addr_long)
+        dict_data['node_time'] = now_time
+        dict_data['node_humi'] = data[0]
+        dict_data['node_temp'] = data[1]
+        dict_data['node_watertemp'] = data[2]
+        database.do_write(dict_data)
+
+
     def update_clientdata(self, data):
         humidity = '%4.2f' % float(data[0])
         temperature_room = '%4.2f' % float(data[1])
@@ -311,7 +325,7 @@ class XbeeThread(QtCore.QThread):
             self.ui_mainwindow.item_model.setData(self.ui_mainwindow.item_model.index(self.listrow, 0, QtCore.QModelIndex()), data[0])
             self.ui_mainwindow.item_model.setData(self.ui_mainwindow.item_model.index(self.listrow, 1, QtCore.QModelIndex()), data[1])
 
-    def message_received(self, data):
+    def message_received(self, data, database):
         try:
             src_addr_long = data['source_addr_long']
             src_addr_short = data['source_addr']
@@ -324,11 +338,14 @@ class XbeeThread(QtCore.QThread):
             orig_str = data['rf_data']  # dict assign to string
             text = orig_str.split(',')
             self.update_clientdata(text)
+            self.update_database(src_addr_long.encode('hex'), text, database)
         except Exception, e:
             print e
+
             return
 
     def run(self):
+        database = RecordDb()
         while not self.abort:
             #print 'xbee thread run.'
             try:
@@ -336,7 +353,7 @@ class XbeeThread(QtCore.QThread):
 
                     data = self.xbee.wait_read_frame()
                     print data
-                    self.message_received(data)
+                    self.message_received(data, database)
 
                 time.sleep(1)
             except KeyboardInterrupt:
