@@ -191,9 +191,6 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         QtCore.QObject.connect(self.menu_config_serial, QtCore.SIGNAL(_fromUtf8("triggered()")), self.config_serial)
         #QtCore.QObject.connect(self.pushButton_setting, QtCore.SIGNAL(_fromUtf8("clicked()")), self.open_configdialog)
 
-        self.item_model = QtGui.QStandardItemModel(0, 2, self)
-        self.item_model.setHeaderData(0, QtCore.Qt.Horizontal, u"物理地址")
-        self.item_model.setHeaderData(1, QtCore.Qt.Horizontal, u"网络地址")
 
         #self.listTableView.setModel(self.item_model)
 
@@ -207,6 +204,18 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         self.table_node_info.horizontalHeader().setResizeMode(4, QtGui.QHeaderView.Stretch)
         self.table_node_info.horizontalHeader().setResizeMode(5, QtGui.QHeaderView.Stretch)
         self.table_node_info.horizontalHeader().setResizeMode(6, QtGui.QHeaderView.ResizeToContents)
+        
+        self.table_range_display.horizontalHeader().setDefaultSectionSize(90)
+        self.table_range_display.setColumnCount(8)
+        self.table_range_display.setHorizontalHeaderLabels((u"物理地址", u"最高室温", u"最低室温", u"最大湿度", u"最低湿度", u"最高水温", u"最低水温" ,u"选中配置"))
+        self.table_range_display.horizontalHeader().setResizeMode(0, QtGui.QHeaderView.ResizeToContents)
+        self.table_range_display.horizontalHeader().setResizeMode(1, QtGui.QHeaderView.Stretch)
+        self.table_range_display.horizontalHeader().setResizeMode(2, QtGui.QHeaderView.Stretch)
+        self.table_range_display.horizontalHeader().setResizeMode(3, QtGui.QHeaderView.Stretch)
+        self.table_range_display.horizontalHeader().setResizeMode(4, QtGui.QHeaderView.Stretch)
+        self.table_range_display.horizontalHeader().setResizeMode(5, QtGui.QHeaderView.Stretch)
+        self.table_range_display.horizontalHeader().setResizeMode(6, QtGui.QHeaderView.Stretch)
+        self.table_range_display.horizontalHeader().setResizeMode(7, QtGui.QHeaderView.ResizeToContents)
 
         #self.listTableView.setColumnWidth()
         # define serial port
@@ -340,6 +349,8 @@ class XbeeThread(QtCore.QThread):
         item_humidity.setFlags(item_humidity.flags() & ~QtCore.Qt.ItemIsEditable)
         item_temperature_water = QtGui.QTableWidgetItem(temperature_water)
         item_temperature_water.setFlags(item_temperature_water.flags() & ~QtCore.Qt.ItemIsEditable)
+        
+        
 
         # 如果找到item，更新到这一行; 如果没有，增加新行;如果有多行，全部删除，重新建一行(不应出现多行的情况,未实现)。
         for item in self.ui_mainwindow.table_node_info.findItems(addr_long, QtCore.Qt.MatchFixedString):
@@ -362,6 +373,17 @@ class XbeeThread(QtCore.QThread):
             self.ui_mainwindow.table_node_info.setItem(row, 3, item_humidity)
             self.ui_mainwindow.table_node_info.setItem(row, 4, item_temperature_water)
             item_checkbox.setCheckState(QtCore.Qt.Checked)
+            self.ui_mainwindow.table_node_info.setItem(row, 6, item_checkbox)
+            
+        item_range_addr_long = QtGui.QTableWidgetItem(addr_long)
+        for item in self.ui_mainwindow.table_range_display.findItems(addr_long, QtCore.Qt.MatchFixedString):
+            #self.ui_mainwindow.table_range_display.setItem(item.row(), 0, item_range_addr_long)
+            pass
+            break
+        else:
+            row = self.ui_mainwindow.table_range_display.rowCount()
+            self.ui_mainwindow.table_range_display.setRowCount(row + 1)
+            self.ui_mainwindow.table_range_display.setItem(row, 0, item_range_addr_long)
 
     def message_received(self, data, database):
         try:
