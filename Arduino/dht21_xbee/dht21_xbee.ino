@@ -40,13 +40,6 @@ static float temp_water_min;
 static float temp_water_max;
 static float humi_min;
 static float humi_max;
-    
-static const char *humi_min_key = "Hmin:";
-static const char * humi_max_key = "Hmax:";
-static const char * temp_room_min_key = "TRmin:";
-static const char * temp_room_max_key = "TRmax:";
-static const char * temp_water_min_key = "TWmin:";
-static const char * temp_water_max_key = "TWmax:";
   
 static dht DHT;
 /* DATA AREA END */
@@ -107,6 +100,8 @@ void humidity_func(double humidity)
   else if(humidity >= humi_max)
   {
     // ok
+    mySerial.println(humidity);
+    mySerial.println(humi_max);
     mySerial.println("\t humidity >=99");
     if(humi_delay > HUMIDITY_TIME_DELAY)
     {
@@ -189,13 +184,12 @@ void parse_rxdata(char rx_data[])
     char strKey[8];
     char strNum[8];
     
-  //mySerial.println(rx_data);
   for(i=0; i<strlen(rx_data); i++)
   {
       strData[i] = rx_data[i];
   }
   strData[i] = '\0';
-  mySerial.println(strData);
+  //mySerial.println(strData);
   
   // split the string "TRmin:20.0,TRmax:30.0,Hmin:90.0,Hmax:100.0,TWmin:20.0,TWmax:35.0"
   char *ptr = strtok(strData,",");
@@ -205,65 +199,21 @@ void parse_rxdata(char rx_data[])
      ptr = strtok(NULL, ","); 
   }
 
-  // extract the params from each string strSubData[][].
-  for(k=0; k<PARAMNUM; k++)
-  {
-    for(i = 0, j = 0; strSubData[k][i] != ':'; i++, j++)
-    {
-      strKey[j] = strSubData[k][i];
-    }
-    strKey[j++] = ':';
-    strKey[j++] = '\0';
-    
-    // j<6 cut off extral chars.it will cause arduino reset.
-    for(i++, j = 0; strSubData[k][i] != '\0' && j<6; i++, j++)
-    {
-      strNum[j] = strSubData[k][i];
-    }
-    strNum[j++] = '\0';
+    // extract the params from each string strSubData[][].
+    //#格式："TRmin,TRmax,Hmin,Hmax,TWmin,TWmax"
+    //#      20.0,30.0,90.0,100.0,20.0,35.0
+    temp_room_min = atof((const char *)strSubData[0]);
+    temp_room_max = atof((const char *)strSubData[1]);
+    humi_min = atof((const char *)strSubData[2]);
+    humi_max = atof((const char *)strSubData[3]);
+    temp_water_min = atof((const char *)strSubData[4]);
+    temp_water_max = atof((const char *)strSubData[5]);
 
-    if(0 == strcmp(temp_room_min_key, strKey))
-    {
-      temp_room_min = atof((const char *)strNum);
-      mySerial.println(temp_room_min);
-    }
-    else if(/*stringKey.compareTo(temp_room_max_key)*/0 == strcmp(temp_room_max_key, strKey))
-    {
-      temp_room_max = atof((const char *)strNum);
-      mySerial.println(temp_room_max);
-    }
-    else if(0 == strcmp(humi_min_key, strKey))
-    {
-      humi_min = atof((const char *)strNum);
-      mySerial.println(humi_min);
-    }
-    else if(0 == strcmp(humi_max_key, strKey))
-    {
-      humi_max = atof((const char *)strNum);
-      mySerial.println(humi_max);
-    }
-    else if(0 == strcmp(temp_water_min_key, strKey))
-    {
-      temp_water_min = atof((const char *)strNum);
-      mySerial.println(temp_water_min);
-    }
-    else if(0 == strcmp(temp_water_max_key, strKey))
-    {
-      temp_water_max = atof((const char *)strNum);
-      mySerial.println(temp_water_max);
-    }
-    else
-    {
-       mySerial.println("[ERROR] parse_rxdata() not found: " );
-    }
-  }
-
-      mySerial.println("+++++++++++++++++++++++++");
-      mySerial.println(temp_room_min);
+    mySerial.println("+++++++++++++++++++++++++");
+    mySerial.println(temp_room_min);
     mySerial.println(temp_room_max);
     mySerial.println(humi_min);
     mySerial.println(humi_max);
-    
     mySerial.println(temp_water_min);
     mySerial.println(temp_water_max);
     mySerial.println("+++++++++++++++++++++++++");
@@ -288,13 +238,14 @@ void send_data()
     // DISPLAT DATA
     dtostrf(DHT.humidity, 3, 2, (char *)str_humidity);
     dtostrf(DHT.temperature, 3, 2, (char *)str_temperature);
-    //mySerial.println(String((char *)str_humidity) + String((char *)str_temperature));
+    mySerial.println(String((char *)str_humidity));
+    mySerial.println(String((char *)str_temperature));
 
     water_sensor.requestTemperatures(); // Send the command to get temperatures
     water_tempe = water_sensor.getTempCByIndex(0);
     dtostrf(water_tempe, 3, 2, (char *)str_water_tempe);
-    //mySerial.print("Water temperature is: ");
-    //mySerial.println(water_tempe);
+    mySerial.print("Water temperature is: ");
+    mySerial.println(water_tempe);
 
     // SEND DATA
     i=0;
@@ -394,6 +345,7 @@ void receive_data()
               rx_data[i] = rx.getData()[i];
           }
           rx_data[i++] = '\0';
+          
           parse_rxdata(rx_data);
         
           /***
