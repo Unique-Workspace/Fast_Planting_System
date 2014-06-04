@@ -329,11 +329,6 @@ class XbeeThread(QtCore.QThread):
 
         item_checkbox = QtGui.QTableWidgetItem()
         item_checkbox.setFlags(item_checkbox.flags() & ~QtCore.Qt.ItemIsEditable)
-<<<<<<< HEAD
-        
-=======
-        item_checkbox.setCheckState(QtCore.Qt.Checked)
->>>>>>> 3864c0af59ebce7718556dcb5d64ebdf447476f6
 
         item_addr_long = QtGui.QTableWidgetItem(addr_long)
         item_addr_long.setFlags(item_addr_long.flags() & ~QtCore.Qt.ItemIsEditable)
@@ -354,11 +349,7 @@ class XbeeThread(QtCore.QThread):
             self.ui_mainwindow.table_node_info.setItem(item.row(), 2, item_temperature_room)
             self.ui_mainwindow.table_node_info.setItem(item.row(), 3, item_humidity)
             self.ui_mainwindow.table_node_info.setItem(item.row(), 4, item_temperature_water)
-<<<<<<< HEAD
             # do not change item_checkbox
-=======
-            self.ui_mainwindow.table_node_info.setItem(item.row(), 6, item_checkbox)
->>>>>>> 3864c0af59ebce7718556dcb5d64ebdf447476f6
 
             break
         else:
@@ -370,11 +361,7 @@ class XbeeThread(QtCore.QThread):
             self.ui_mainwindow.table_node_info.setItem(row, 2, item_temperature_room)
             self.ui_mainwindow.table_node_info.setItem(row, 3, item_humidity)
             self.ui_mainwindow.table_node_info.setItem(row, 4, item_temperature_water)
-<<<<<<< HEAD
             item_checkbox.setCheckState(QtCore.Qt.Checked)
-=======
->>>>>>> 3864c0af59ebce7718556dcb5d64ebdf447476f6
-            self.ui_mainwindow.table_node_info.setItem(row, 6, item_checkbox)
 
     def message_received(self, data, database):
         try:
