@@ -40,7 +40,7 @@ R1_ADDR_SHORT = b'\xff\xfe'
 
 
 class ConfigDialogFrame(QtGui.QDialog, Ui_ConfigDialog):
-    def __init__(self, Serial, Xbee):
+    def __init__(self, Serial, Xbee, mainwindow):
         super(ConfigDialogFrame, self).__init__()
 
         self.setupUi(self)
@@ -65,6 +65,8 @@ class ConfigDialogFrame(QtGui.QDialog, Ui_ConfigDialog):
 
         self.serial = Serial
         self.xbee = Xbee
+        self.ui_mainwindow = mainwindow
+
         print 'ConfigDialogFrame init.'
 
     def __del__(self):
@@ -74,12 +76,16 @@ class ConfigDialogFrame(QtGui.QDialog, Ui_ConfigDialog):
         self.reject()
 
     def set_config(self):
-        print self.spinBox_tmin.value()
-        print self.spinBox_tmax.value()
-        print self.spinBox_hmin.value()
-        print self.spinBox_hmax.value()
-        print self.spinBox_wtmin.value()
-        print self.spinBox_wtmax.value()
+
+        addr_long_short = []
+        # item_checkbox.setCheckState(QtCore.Qt.Checked)
+        for row in range(0, self.ui_mainwindow.table_node_info.rowCount()):
+            item = self.ui_mainwindow.table_node_info.item(row, 6)
+            # enum CheckState {Unchecked-0, PartiallyChecked-1, Checked-2}
+            if QtCore.Qt.Checked == item.checkState():
+                addr_long_short.append((self.ui_mainwindow.table_node_info.item(row, 0).text(),
+                                 self.ui_mainwindow.table_node_info.item(row, 1).text()))
+
         tempra_min = self.spinBox_tmin.value()
         tempra_max = self.spinBox_tmax.value()
         if tempra_min < 0 or tempra_min > 50:
@@ -129,15 +135,20 @@ class ConfigDialogFrame(QtGui.QDialog, Ui_ConfigDialog):
             temp_water_min_data + ',' + temp_water_max_data
         print send_data
         try:
-            # Send Tx packet Temperature min
-            if self.serial.isOpen():
-                self.xbee.send('tx', frame_id='A', dest_addr_long=R1_ADDR_LONG, dest_addr=R1_ADDR_SHORT,
+            for addr in addr_long_short:
+                addr_long = str(addr[0]).decode('hex')
+                addr_short = str(addr[1]).decode('hex')
+                print addr_long, addr_short
+
+                # Send Tx packet Temperature min
+                if self.serial.isOpen():
+                    self.xbee.send('tx', frame_id='A', dest_addr_long=addr_long, dest_addr=addr_short,
                                data=str(send_data))
 
-            # Wait for response
-            #if self.Serial.isOpen() and self.Serial.inWaiting():
-            #    response = self.Xbee.wait_read_frame()
-            #    print response
+                # Wait for response
+                #if self.Serial.isOpen() and self.Serial.inWaiting():
+                #    response = self.Xbee.wait_read_frame()
+                #    print response
         except Exception, e:
                 print '[Error]set_config() Transfer Fail!!', e
 
@@ -175,7 +186,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
 
         self.setupUi(self)
 
-        QtCore.QObject.connect(self.button_scan, QtCore.SIGNAL(_fromUtf8("clicked()")), self.scan_node)
+        QtCore.QObject.connect(self.button_config, QtCore.SIGNAL(_fromUtf8("clicked()")), self.open_configdialog)
         QtCore.QObject.connect(self.button_open_serial, QtCore.SIGNAL(_fromUtf8("clicked()")), self.open_serial)
         QtCore.QObject.connect(self.menu_config_serial, QtCore.SIGNAL(_fromUtf8("triggered()")), self.config_serial)
         #QtCore.QObject.connect(self.pushButton_setting, QtCore.SIGNAL(_fromUtf8("clicked()")), self.open_configdialog)
@@ -184,11 +195,18 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         self.item_model.setHeaderData(0, QtCore.Qt.Horizontal, u"物理地址")
         self.item_model.setHeaderData(1, QtCore.Qt.Horizontal, u"网络地址")
 
-        self.listTableView.setModel(self.item_model)
+        #self.listTableView.setModel(self.item_model)
 
-        self.tableWidgetNodeInfo.horizontalHeader().setDefaultSectionSize(90)
-        self.tableWidgetNodeInfo.setColumnCount(5)
-        self.tableWidgetNodeInfo.setHorizontalHeaderLabels((u"室温", u"湿度", u"水温", u"LED", u"Button"))
+        self.table_node_info.horizontalHeader().setDefaultSectionSize(90)
+        self.table_node_info.setColumnCount(7)
+        self.table_node_info.setHorizontalHeaderLabels((u"物理地址", u"网络地址", u"室温", u"湿度", u"水温", u"LED", u"选中配置"))
+        self.table_node_info.horizontalHeader().setResizeMode(0, QtGui.QHeaderView.ResizeToContents)
+        self.table_node_info.horizontalHeader().setResizeMode(1, QtGui.QHeaderView.Stretch)
+        self.table_node_info.horizontalHeader().setResizeMode(2, QtGui.QHeaderView.Stretch)
+        self.table_node_info.horizontalHeader().setResizeMode(3, QtGui.QHeaderView.Stretch)
+        self.table_node_info.horizontalHeader().setResizeMode(4, QtGui.QHeaderView.Stretch)
+        self.table_node_info.horizontalHeader().setResizeMode(5, QtGui.QHeaderView.Stretch)
+        self.table_node_info.horizontalHeader().setResizeMode(6, QtGui.QHeaderView.ResizeToContents)
 
         #self.listTableView.setColumnWidth()
         # define serial port
@@ -210,8 +228,6 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         self.xbee_thread.xbee_thread_stop()
         self.xbee_thread.wait()   # must call wait() to quit the xbee thread.
         print 'FastPlantingFrame del.'
-
-
 
     def scan_node(self):
         print 'scan_node.'
@@ -249,7 +265,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
             self.button_open_serial.setText(u"连接")
 
     def open_configdialog(self):
-        config_dialog = ConfigDialogFrame(self.serial, self.xbee)
+        config_dialog = ConfigDialogFrame(self.serial, self.xbee, self)
         ret = config_dialog.exec_()
         print 'open_configdialog done.'
 
@@ -302,53 +318,65 @@ class XbeeThread(QtCore.QThread):
         dict_data['node_watertemp'] = data[2]
         database.do_write(dict_data)
 
-
-    def update_clientdata(self, data):
-        humidity = '%4.2f' % float(data[0])
-        temperature_room = '%4.2f' % float(data[1])
-        temperature_water = '%4.2f' % float(data[2])
-        now_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
-        text = 'H:' + humidity + ' Tr:' + temperature_room + ' Tw:' + temperature_water + ' ' + now_time
-        print text
-
-        self.tempChanged.emit(temperature_room)
-        self.humiChanged.emit(humidity)
-        self.watertempChanged.emit(temperature_water)
-
-
-    def update_listview(self, data):
+    def update_table_nodeinfo(self, data, text):
         # put the (addr_long, addr_short) to dictionary.
-        self.addr_dict[data[0]] = data[1]
+        #self.addr_dict[data[0]] = data[1]
+        addr_long = data[0]
+        addr_short = data[1]
+        humidity = '%4.2f' % float(text[0])
+        temperature_room = '%4.2f' % float(text[1])
+        temperature_water = '%4.2f' % float(text[2])
+
+        item_checkbox = QtGui.QTableWidgetItem()
+        item_checkbox.setFlags(item_checkbox.flags() & ~QtCore.Qt.ItemIsEditable)
+        
+
+        item_addr_long = QtGui.QTableWidgetItem(addr_long)
+        item_addr_long.setFlags(item_addr_long.flags() & ~QtCore.Qt.ItemIsEditable)
+        item_addr_short = QtGui.QTableWidgetItem(addr_short)
+        item_addr_short.setFlags(item_addr_short.flags() & ~QtCore.Qt.ItemIsEditable)
+        item_temperature_room = QtGui.QTableWidgetItem(temperature_room)
+        item_temperature_room.setFlags(item_temperature_room.flags() & ~QtCore.Qt.ItemIsEditable)
+        item_humidity = QtGui.QTableWidgetItem(humidity)
+        item_humidity.setFlags(item_humidity.flags() & ~QtCore.Qt.ItemIsEditable)
+        item_temperature_water = QtGui.QTableWidgetItem(temperature_water)
+        item_temperature_water.setFlags(item_temperature_water.flags() & ~QtCore.Qt.ItemIsEditable)
 
         # 如果找到item，更新到这一行; 如果没有，增加新行;如果有多行，全部删除，重新建一行(不应出现多行的情况,未实现)。
-        for item in self.ui_mainwindow.item_model.findItems(data[0]):
-            self.ui_mainwindow.item_model.setData(self.ui_mainwindow.item_model.index(item.row(), 0, QtCore.QModelIndex()), data[0])
-            self.ui_mainwindow.item_model.setData(self.ui_mainwindow.item_model.index(item.row(), 1, QtCore.QModelIndex()), data[1])
+        for item in self.ui_mainwindow.table_node_info.findItems(addr_long, QtCore.Qt.MatchFixedString):
+            #print item, item.row(), item.column()
+            #item.setText(data[0])
+            self.ui_mainwindow.table_node_info.setItem(item.row(), 1, item_addr_short)
+            self.ui_mainwindow.table_node_info.setItem(item.row(), 2, item_temperature_room)
+            self.ui_mainwindow.table_node_info.setItem(item.row(), 3, item_humidity)
+            self.ui_mainwindow.table_node_info.setItem(item.row(), 4, item_temperature_water)
+            # do not change item_checkbox
+
             break
         else:
             #print 'else'
-            self.ui_mainwindow.item_model.insertRows(self.listrow, 1, QtCore.QModelIndex())
-            self.ui_mainwindow.item_model.setData(self.ui_mainwindow.item_model.index(self.listrow, 0, QtCore.QModelIndex()), data[0])
-            self.ui_mainwindow.item_model.setData(self.ui_mainwindow.item_model.index(self.listrow, 1, QtCore.QModelIndex()), data[1])
+            row = self.ui_mainwindow.table_node_info.rowCount()
+            self.ui_mainwindow.table_node_info.setRowCount(row + 1)
+            self.ui_mainwindow.table_node_info.setItem(row, 0, item_addr_long)
+            self.ui_mainwindow.table_node_info.setItem(row, 1, item_addr_short)
+            self.ui_mainwindow.table_node_info.setItem(row, 2, item_temperature_room)
+            self.ui_mainwindow.table_node_info.setItem(row, 3, item_humidity)
+            self.ui_mainwindow.table_node_info.setItem(row, 4, item_temperature_water)
+            item_checkbox.setCheckState(QtCore.Qt.Checked)
+            self.ui_mainwindow.table_node_info.setItem(row, 6, item_checkbox)
 
     def message_received(self, data, database):
         try:
             src_addr_long = data['source_addr_long']
             src_addr_short = data['source_addr']
-            self.update_listview((src_addr_long.encode('hex'), src_addr_short.encode('hex')))
-        except Exception, e:    # Except for receive empty Rx data while sending Tx data.
-            print e
-            return
-        try:
+
             '''数据结构：字符串类型 '湿度，温度，水温' '''
             orig_str = data['rf_data']  # dict assign to string
             text = orig_str.split(',')
-            self.update_clientdata(text)
+            self.update_table_nodeinfo((src_addr_long.encode('hex'), src_addr_short.encode('hex')), text)
             self.update_database(src_addr_long.encode('hex'), text, database)
         except Exception, e:
             print e
-
-            return
 
     def run(self):
         database = RecordDb()
