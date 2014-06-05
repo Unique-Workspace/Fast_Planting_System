@@ -38,6 +38,33 @@ BROADCAST_ADDR_SHORT = b'\xff\xfe'
 R1_ADDR_LONG = b'\x00\x13\xA2\x00\x40\xB4\x10\x3b'
 R1_ADDR_SHORT = b'\xff\xfe'
 
+class ImageDelegate(QtGui.QItemDelegate):
+    def createEditor(self, parent, option, index):
+        comboBox = QtGui.QComboBox(parent)
+        if index.column() == 7:
+            comboBox.addItem("Off")
+            comboBox.addItem("On")
+
+        #comboBox.activated.connect(self.emitCommitData)
+
+        return comboBox
+
+    def setEditorData(self, editor, index):
+        comboBox = editor
+        if not comboBox:
+            return
+
+        pos = comboBox.findText(index.model().data(index),
+                QtCore.Qt.MatchExactly)
+        comboBox.setCurrentIndex(pos)
+
+    def setModelData(self, editor, model, index):
+        comboBox = editor
+        if not comboBox:
+            return
+
+        model.setData(index, comboBox.currentText())
+
 
 class ConfigDialogFrame(QtGui.QDialog, Ui_ConfigDialog):
     def __init__(self, Serial, Xbee, mainwindow):
@@ -191,9 +218,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         QtCore.QObject.connect(self.menu_config_serial, QtCore.SIGNAL(_fromUtf8("triggered()")), self.config_serial)
         #QtCore.QObject.connect(self.pushButton_setting, QtCore.SIGNAL(_fromUtf8("clicked()")), self.open_configdialog)
 
-
         #self.listTableView.setModel(self.item_model)
-
         self.table_node_info.horizontalHeader().setDefaultSectionSize(90)
         self.table_node_info.setColumnCount(7)
         self.table_node_info.setHorizontalHeaderLabels((u"物理地址", u"网络地址", u"室温", u"湿度", u"水温", u"LED", u"选中配置"))
@@ -207,7 +232,8 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         
         self.table_range_display.horizontalHeader().setDefaultSectionSize(90)
         self.table_range_display.setColumnCount(8)
-        self.table_range_display.setHorizontalHeaderLabels((u"物理地址", u"最高室温", u"最低室温", u"最大湿度", u"最低湿度", u"最高水温", u"最低水温" ,u"选中配置"))
+        self.table_range_display.setHorizontalHeaderLabels((u"物理地址", u"最高室温", u"最低室温", u"最大湿度", u"最低湿度",
+                                                            u"最高水温", u"最低水温", u"选中配置"))
         self.table_range_display.horizontalHeader().setResizeMode(0, QtGui.QHeaderView.ResizeToContents)
         self.table_range_display.horizontalHeader().setResizeMode(1, QtGui.QHeaderView.Stretch)
         self.table_range_display.horizontalHeader().setResizeMode(2, QtGui.QHeaderView.Stretch)
@@ -280,12 +306,6 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
 
 
 class XbeeThread(QtCore.QThread):
-    tempChanged = QtCore.pyqtSignal(str)
-    humiChanged = QtCore.pyqtSignal(str)
-    watertempChanged = QtCore.pyqtSignal(str)
-    ledChanged = QtCore.pyqtSignal(str)
-
-
     def __init__(self,  myserial, myxbee, mainwindow):
         super(XbeeThread, self).__init__()
 
@@ -294,17 +314,10 @@ class XbeeThread(QtCore.QThread):
         self.ui_mainwindow = mainwindow
         self.abort = False
         self.listrow = 0
-
-        #self.tempChanged.connect(self.ui_mainwindow.tempLcd.display)
-        #self.humiChanged.connect(self.ui_mainwindow.humiLcd.display)
-        #self.watertempChanged.connect(self.ui_mainwindow.watertempLcd.display)
-        #self.ledChanged.connect(self.ui_mainwindow.ledLcd.display)
-
         self.addr_dict = {}
         print 'XbeeThread init.'
 
     def __del__(self):
-
         print 'XbeeThread del.'
 
     def xbee_thread_start(self):
