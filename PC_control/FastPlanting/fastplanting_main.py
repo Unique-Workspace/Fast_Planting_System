@@ -42,8 +42,8 @@ class ImageDelegate(QtGui.QItemDelegate):
     def createEditor(self, parent, option, index):
         comboBox = QtGui.QComboBox(parent)
         if index.column() == 7:
-            comboBox.addItem("Off")
-            comboBox.addItem("On")
+            comboBox.addItem(u"关闭")
+            comboBox.addItem(u"打开")
 
         #comboBox.activated.connect(self.emitCommitData)
 
@@ -65,6 +65,8 @@ class ImageDelegate(QtGui.QItemDelegate):
 
         model.setData(index, comboBox.currentText())
 
+    #def emitCommitData(self):
+    #   self.commitData.emit(self.sender())
 
 class ConfigDialogFrame(QtGui.QDialog, Ui_ConfigDialog):
     def __init__(self, Serial, Xbee, mainwindow):
@@ -230,10 +232,11 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         self.table_node_info.horizontalHeader().setResizeMode(5, QtGui.QHeaderView.Stretch)
         self.table_node_info.horizontalHeader().setResizeMode(6, QtGui.QHeaderView.ResizeToContents)
         
+        self.table_range_display.setItemDelegate(ImageDelegate(self))
         self.table_range_display.horizontalHeader().setDefaultSectionSize(90)
         self.table_range_display.setColumnCount(8)
-        self.table_range_display.setHorizontalHeaderLabels((u"物理地址", u"最高室温", u"最低室温", u"最大湿度", u"最低湿度",
-                                                            u"最高水温", u"最低水温", u"选中配置"))
+        self.table_range_display.setHorizontalHeaderLabels((u"地址选中配置", u"最高室温", u"最低室温", u"最大湿度", u"最低湿度",
+                                                            u"最高水温", u"最低水温", u"LED"))
         self.table_range_display.horizontalHeader().setResizeMode(0, QtGui.QHeaderView.ResizeToContents)
         self.table_range_display.horizontalHeader().setResizeMode(1, QtGui.QHeaderView.Stretch)
         self.table_range_display.horizontalHeader().setResizeMode(2, QtGui.QHeaderView.Stretch)
@@ -241,7 +244,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         self.table_range_display.horizontalHeader().setResizeMode(4, QtGui.QHeaderView.Stretch)
         self.table_range_display.horizontalHeader().setResizeMode(5, QtGui.QHeaderView.Stretch)
         self.table_range_display.horizontalHeader().setResizeMode(6, QtGui.QHeaderView.Stretch)
-        self.table_range_display.horizontalHeader().setResizeMode(7, QtGui.QHeaderView.ResizeToContents)
+        self.table_range_display.horizontalHeader().setResizeMode(7, QtGui.QHeaderView.Stretch)
 
         #self.listTableView.setColumnWidth()
         # define serial port
@@ -389,6 +392,8 @@ class XbeeThread(QtCore.QThread):
             self.ui_mainwindow.table_node_info.setItem(row, 6, item_checkbox)
             
         item_range_addr_long = QtGui.QTableWidgetItem(addr_long)
+        item_range_led = QtGui.QTableWidgetItem(u'关闭')
+        #item_range_led.setText(u'关闭')
         for item in self.ui_mainwindow.table_range_display.findItems(addr_long, QtCore.Qt.MatchFixedString):
             #self.ui_mainwindow.table_range_display.setItem(item.row(), 0, item_range_addr_long)
             pass
@@ -397,6 +402,8 @@ class XbeeThread(QtCore.QThread):
             row = self.ui_mainwindow.table_range_display.rowCount()
             self.ui_mainwindow.table_range_display.setRowCount(row + 1)
             self.ui_mainwindow.table_range_display.setItem(row, 0, item_range_addr_long)
+            self.ui_mainwindow.table_range_display.setItem(row, 7, item_range_led)
+            #self.ui_mainwindow.table_range_display.openPersistentEditor(item_range_led)
 
     def message_received(self, data, database):
         try:
