@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'UI_MainWindow.ui'
 #
-# Created: Wed Jun  4 23:53:08 2014
+# Created: Sat Jun 07 17:59:47 2014
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -100,6 +100,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_2 = QtGui.QVBoxLayout(self.groupBox_2)
         self.verticalLayout_2.setObjectName(_fromUtf8("verticalLayout_2"))
         self.table_range_display = QtGui.QTableWidget(self.groupBox_2)
+        self.table_range_display.setEditTriggers(QtGui.QAbstractItemView.AnyKeyPressed|QtGui.QAbstractItemView.DoubleClicked|QtGui.QAbstractItemView.EditKeyPressed)
         self.table_range_display.setObjectName(_fromUtf8("table_range_display"))
         self.table_range_display.setColumnCount(0)
         self.table_range_display.setRowCount(0)
@@ -109,8 +110,8 @@ class Ui_MainWindow(object):
         self.splitter_2.setObjectName(_fromUtf8("splitter_2"))
         self.label_3 = QtGui.QLabel(self.splitter_2)
         self.label_3.setObjectName(_fromUtf8("label_3"))
-        self.lineEdit = QtGui.QLineEdit(self.splitter_2)
-        self.lineEdit.setObjectName(_fromUtf8("lineEdit"))
+        self.line_config_status = QtGui.QLineEdit(self.splitter_2)
+        self.line_config_status.setObjectName(_fromUtf8("line_config_status"))
         self.pushButton_config = QtGui.QPushButton(self.splitter_2)
         self.pushButton_config.setObjectName(_fromUtf8("pushButton_config"))
         self.pushButton_save = QtGui.QPushButton(self.splitter_2)
@@ -121,7 +122,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout.addWidget(self.tab_display)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 914, 29))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 914, 23))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menu = QtGui.QMenu(self.menubar)
         self.menu.setObjectName(_fromUtf8("menu"))

@@ -19,27 +19,29 @@
 #define HUMI_CTRL_PIN 3  // for humidifier on/off control
 #define ONE_WIRE_BUS 4  // for 18b20 water temprature 
 #define WATER_CTRL_PIN 5 // for 18b20 water ctrl.
+#define LED_CTRL_PIN 6
 /* PIN DEFINE END */
 
 /* DATA AREA BEGIN */
 #define HUMIDITY_TIME_DELAY  300
-#define LENGTH 20
+#define PAYLOAD_LENGTH 40
 #define BUFLEN 80
 #define SUB_BUFLEN 15
-#define PARAMNUM 6
+#define PARAMNUM 7
 // MAX data payload: 32*7 + 19 = 243  bytes
-static uint8_t payload[LENGTH];
+static uint8_t payload[PAYLOAD_LENGTH];
 static uint8_t str_temperature[7];
 static uint8_t str_humidity[7];
 static uint8_t str_water_tempe[7];
-static uint8_t humi_delay = 0;
-
+static uint8_t str_led_ctrl[7];
+static int humi_delay = 0;
 static float temp_room_min;
 static float temp_room_max;
 static float temp_water_min;
 static float temp_water_max;
 static float humi_min;
 static float humi_max;
+static int   led_ctrl;
   
 static dht DHT;
 /* DATA AREA END */
@@ -175,6 +177,27 @@ void water_func(double water_temperature)
   }
 }
 
+void led_func(int ctrl_flag)
+{
+    if(ctrl_flag == 1) //turn on
+    {
+        digitalWrite(LED_CTRL_PIN, HIGH);
+    }
+    else if(ctrl_flag == 0)
+    {
+        digitalWrite(LED_CTRL_PIN, LOW);
+    }
+    else
+    {
+        mySerial.println("\t led_func error.");
+    }
+}
+
+int get_led_status()
+{
+    return digitalRead(LED_CTRL_PIN);
+}
+
 static char strData[BUFLEN];
 static char strSubData[PARAMNUM][SUB_BUFLEN];
 // parse the Rx payload data. get the temperature and humidity value from the packets.
@@ -189,7 +212,7 @@ void parse_rxdata(char rx_data[])
       strData[i] = rx_data[i];
   }
   strData[i] = '\0';
-  //mySerial.println(strData);
+  mySerial.println(strData);
   
   // split the string "TRmin:20.0,TRmax:30.0,Hmin:90.0,Hmax:100.0,TWmin:20.0,TWmax:35.0"
   char *ptr = strtok(strData,",");
@@ -208,6 +231,7 @@ void parse_rxdata(char rx_data[])
     humi_max = atof((const char *)strSubData[3]);
     temp_water_min = atof((const char *)strSubData[4]);
     temp_water_max = atof((const char *)strSubData[5]);
+    led_ctrl = atoi((const char *)strSubData[6]);
 
     mySerial.println("+++++++++++++++++++++++++");
     mySerial.println(temp_room_min);
@@ -216,12 +240,13 @@ void parse_rxdata(char rx_data[])
     mySerial.println(humi_max);
     mySerial.println(temp_water_min);
     mySerial.println(temp_water_max);
+    mySerial.println(led_ctrl);
     mySerial.println("+++++++++++++++++++++++++");
+    led_func(led_ctrl);
 }
 
 void send_data()
 {
-
     int i, j;
     double water_tempe;
 
@@ -246,6 +271,11 @@ void send_data()
     dtostrf(water_tempe, 3, 2, (char *)str_water_tempe);
     mySerial.print("Water temperature is: ");
     mySerial.println(water_tempe);
+    
+    led_ctrl = get_led_status();
+    itoa(led_ctrl, (char *)str_led_ctrl, 10);
+    mySerial.print("LED is: ");
+    mySerial.println(String((char *)str_led_ctrl));
 
     // SEND DATA
     i=0;
@@ -262,6 +292,11 @@ void send_data()
     for(j=0; j<7 && str_water_tempe[j]!=0; i++,j++)
     {
         payload[i] = str_water_tempe[j];
+    }
+    payload[i++] = ',';
+    for(j=0; j<7 && str_led_ctrl[j]!=0; i++,j++)
+    {
+        payload[i] = str_led_ctrl[j];
     }
     payload[i++] = ',';
   
@@ -375,7 +410,7 @@ static int protothread_send(struct pt *pt)
     PT_BEGIN(pt);  
     while(1) 
     {  
-        PT_WAIT_UNTIL(pt, counter_send==10); 
+        PT_WAIT_UNTIL(pt, counter_send==20); 
         send_data();
         counter_send=0;   
     } 
@@ -415,6 +450,7 @@ void setup()
   
     pinMode(HUMI_CTRL_PIN, OUTPUT);
     pinMode(WATER_CTRL_PIN, OUTPUT);
+    pinMode(LED_CTRL_PIN, OUTPUT);
 
     // Start up the 18b20 water sensor library
     water_sensor.begin();
