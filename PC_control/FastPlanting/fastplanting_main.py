@@ -289,7 +289,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
 
                         # Wait for response
                         if self.serial.isOpen() and self.serial.inWaiting():
-                            response = self.Xbee.wait_read_frame()
+                            response = self.xbee.wait_read_frame()
                             print response
                             self.table_range_display.line_config_status.setText(u'设置成功！')
                 except Exception, e:
