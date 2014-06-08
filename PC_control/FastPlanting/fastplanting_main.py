@@ -32,6 +32,7 @@ import serial
 import sys, string
 import time
 from database import RecordDb
+from config_process import ConfigProcess
 
 BROADCAST_ADDR_LONG = b'\x00\x00\x00\x00\x00\x00\xff\xff'
 BROADCAST_ADDR_SHORT = b'\xff\xfe'
@@ -132,6 +133,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         QtCore.QObject.connect(self.button_open_serial, QtCore.SIGNAL(_fromUtf8("clicked()")), self.open_serial)
         QtCore.QObject.connect(self.menu_config_serial, QtCore.SIGNAL(_fromUtf8("triggered()")), self.config_serial)
         QtCore.QObject.connect(self.pushButton_config, QtCore.SIGNAL(_fromUtf8("clicked()")), self.send_config)
+        QtCore.QObject.connect(self.pushButton_save, QtCore.SIGNAL(_fromUtf8("clicked()")), self.save_config)
 
         #self.listTableView.setModel(self.item_model)
         self.table_node_info.horizontalHeader().setDefaultSectionSize(90)
@@ -295,6 +297,29 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
                 except Exception, e:
                         print '[Error]set_config() Transfer Fail!!', e
 
+    def save_config(self):
+        config = ConfigProcess()
+        config.load_config()
+        for row in range(0, self.table_range_display.rowCount()):
+            # enum CheckState {Unchecked-0, PartiallyChecked-1, Checked-2}
+            addr_long = str(self.table_range_display.item(row, 0).text())
+            temp_min = self.table_range_display.item(row, 2).text()
+            temp_max = self.table_range_display.item(row, 3).text()
+            humi_min = self.table_range_display.item(row, 4).text()
+            humi_max = self.table_range_display.item(row, 5).text()
+            wtemp_min = self.table_range_display.item(row, 6).text()
+            wtemp_max = self.table_range_display.item(row, 7).text()
+            led_ctrl = self.table_range_display.item(row, 8).text()
+            led = '1'
+            if led_ctrl == 'ON':
+                led = '1'
+            elif led_ctrl == 'OFF':
+                led = '0'
+            config_data = (addr_long, temp_min, temp_max, humi_min, humi_max, wtemp_min, wtemp_max, led)
+            config.set_config_value(config_data)
+
+        config.save_config()
+
 
 class XbeeThread(QtCore.QThread):
     def __init__(self,  myserial, myxbee, mainwindow):
@@ -336,7 +361,7 @@ class XbeeThread(QtCore.QThread):
         #self.addr_dict[data[0]] = data[1]
         addr_long = data[0]
         addr_short = data[1]
-        humidity = '%4.2f' % float(text[0])
+        humidity = '%5.2f' % float(text[0])
         temperature_room = '%4.2f' % float(text[1])
         temperature_water = '%4.2f' % float(text[2])
         led_status = '%d' % int(text[3])
