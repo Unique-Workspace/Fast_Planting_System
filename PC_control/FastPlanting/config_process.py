@@ -39,7 +39,7 @@ class ConfigProcess():
                 self.config_dict[records[0]]['hmax'] = '%5.2f' % float(records[4])
                 self.config_dict[records[0]]['wtmin'] = '%4.2f' % float(records[5])
                 self.config_dict[records[0]]['wtmax'] = '%4.2f' % float(records[6])
-                self.config_dict[records[0]]['led'] = int(records[7])
+                self.config_dict[records[0]]['led'] = '%d' % int(records[7])
                 print 'load_config duplicate.'
             else:
                 cfg_dict[records[0]] = {}
@@ -50,7 +50,7 @@ class ConfigProcess():
                 cfg_dict[records[0]]['hmax'] = '%5.2f' % float(records[4])
                 cfg_dict[records[0]]['wtmin'] = '%4.2f' % float(records[5])
                 cfg_dict[records[0]]['wtmax'] = '%4.2f' % float(records[6])
-                cfg_dict[records[0]]['led'] = int(records[7])
+                cfg_dict[records[0]]['led'] = '%d' % int(records[7])
                 self.config_dict.update(cfg_dict)
 
         #print self.config_dict
@@ -90,7 +90,7 @@ class ConfigProcess():
                 self.config_dict[data[0]]['hmax'] = '%5.2f' % float(data[4])
                 self.config_dict[data[0]]['wtmin'] = '%4.2f' % float(data[5])
                 self.config_dict[data[0]]['wtmax'] = '%4.2f' % float(data[6])
-                self.config_dict[data[0]]['led'] = int(data[7])
+                self.config_dict[data[0]]['led'] = '%d' % int(data[7])
                 print data[0] + 'set_config_value is duplicate.'
             else:
                 cfg_dict = {}
@@ -102,7 +102,7 @@ class ConfigProcess():
                 cfg_dict[data[0]]['hmax'] = '%5.2f' % float(data[4])
                 cfg_dict[data[0]]['wtmin'] = '%4.2f' % float(data[5])
                 cfg_dict[data[0]]['wtmax'] = '%4.2f' % float(data[6])
-                cfg_dict[data[0]]['led'] = int(data[7])
+                cfg_dict[data[0]]['led'] = '%d' % int(data[7])
                 self.config_dict.update(cfg_dict)
                 #print self.config_dict
         else:
@@ -121,7 +121,7 @@ class ConfigProcess():
             ret = (tmin, tmax, hmin, hmax, wtmin, wtmax, led)
             return ret
         else:
-            return ()
+            return None
 
 '''
 if __name__ == "__main__":

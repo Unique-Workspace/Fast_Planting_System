@@ -157,7 +157,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         #self.listTableView.setColumnWidth()
         # define serial port
         self.serial = serial.Serial()
-        self.serial_port = 'COM26'    # '/dev/ttyAMA0'
+        self.serial_port =  '/dev/ttyAMA0'
         self.serial_baundrate = 115200
         # Create API object, which spawns a new thread
         self.xbee = ZigBee(self.serial)
@@ -228,13 +228,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
                 led_ctrl = self.table_range_display.item(row, 8).text()
                 print addr_long_short, temp_min, temp_max, humi_min, humi_max, wtemp_min, wtemp_max, led_ctrl
 
-                if led_ctrl == 'OFF':
-                    led_status = '0'
-                elif led_ctrl == 'ON':
-                    led_status = '1'
-                else:
-                    print '[Error] Unknown LED ctrl.'
-                    return
+                led_status = '1' if led_ctrl == 'ON' else '0'
 
                 if temp_min < 0 or temp_min > 50:
                     print '[Error]TempMin out of range: ' + str(temp_min)
@@ -273,30 +267,39 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
                 wtemp_min_data = str(wtemp_min)
                 wtemp_max_data = str(wtemp_max)
 
+                
                 #格式："TRmin,TRmax,Hmin,Hmax,TWmin,TWmax"
                 #      20.0,30.0,90.0,100.0,20.0,35.0
                 send_data = temp_min_data + ',' + temp_max_data + ',' + humi_min_data + ',' + humi_max_data + ',' + \
                     wtemp_min_data + ',' + wtemp_max_data + ',' + led_status
                 print send_data
-                try:
-                    for addr in addr_long_short:
-                        addr_long = str(addr[0]).decode('hex')
-                        addr_short = str(addr[1]).decode('hex')
-                        print addr_long, addr_short
+                self.send_config_func(addr_long_short, send_data)
+                
+                
+    def send_config_func(self, addr_long_short, send_data):
+        
+        try:
+            for addr in addr_long_short:
+                addr_long = str(addr[0]).decode('hex')
+                addr_short = str(addr[1]).decode('hex')
+                
+                print addr_long_short, send_data
+                print addr_long, addr_short
 
-                        # Send Tx packet Temperature min
-                        if self.serial.isOpen():
-                            self.xbee.send('tx', frame_id='A', dest_addr_long=addr_long, dest_addr=addr_short,
-                                       data=str(send_data))
+                # Send Tx packet Temperature min
+                if self.serial.isOpen():
+                    self.xbee.send('tx', frame_id='A', dest_addr_long=addr_long, dest_addr=addr_short,
+                                data=str(send_data))
 
-                        # Wait for response
-                        if self.serial.isOpen() and self.serial.inWaiting():
-                            response = self.xbee.wait_read_frame()
-                            print response
-                            self.table_range_display.line_config_status.setText(u'设置成功！')
-                except Exception, e:
-                        print '[Error]set_config() Transfer Fail!!', e
-
+                # Wait for response
+                if self.serial.isOpen() and self.serial.inWaiting():
+                    response = self.xbee.wait_read_frame()
+                    print response
+                    self.line_config_status.setText(u'设置成功！')
+        except Exception, e:
+                print '[Error]set_config() Transfer Fail!!', e
+                        
+                        
     def save_config(self):
         config = ConfigProcess()
         config.load_config()
@@ -310,15 +313,13 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
             wtemp_min = self.table_range_display.item(row, 6).text()
             wtemp_max = self.table_range_display.item(row, 7).text()
             led_ctrl = self.table_range_display.item(row, 8).text()
-            led = '1'
-            if led_ctrl == 'ON':
-                led = '1'
-            elif led_ctrl == 'OFF':
-                led = '0'
+            
+            led = '1' if led_ctrl == 'ON' else '0'
             config_data = (addr_long, temp_min, temp_max, humi_min, humi_max, wtemp_min, wtemp_max, led)
             config.set_config_value(config_data)
 
         config.save_config()
+        self.line_config_status.setText(u'配置保存成功！')
 
 
 class XbeeThread(QtCore.QThread):
@@ -406,7 +407,7 @@ class XbeeThread(QtCore.QThread):
             self.ui_mainwindow.table_node_info.setItem(row, 4, item_temperature_water)
             self.ui_mainwindow.table_node_info.setItem(row, 5, item_led)
 
-        # Create range display config Tab view.
+        # Create range display CONFIG Tab view.
         item_range_addr_long = QtGui.QTableWidgetItem(addr_long)
         item_range_addr_long.setData(QtCore.Qt.UserRole, addr_long)
         item_range_addr_long.setFlags(item_range_addr_long.flags() & ~QtCore.Qt.ItemIsEditable)
@@ -417,29 +418,57 @@ class XbeeThread(QtCore.QThread):
         item_range_addr_short.setFlags(item_range_addr_short.flags() & ~QtCore.Qt.ItemIsEditable)
         item_range_addr_short.setTextAlignment(QtCore.Qt.AlignCenter)
 
-        item_range_tmin = QtGui.QTableWidgetItem('20.0')
-        item_range_tmin.setTextAlignment(QtCore.Qt.AlignCenter)
-        item_range_tmax = QtGui.QTableWidgetItem('30.0')
-        item_range_tmax.setTextAlignment(QtCore.Qt.AlignCenter)
-        item_range_hmin = QtGui.QTableWidgetItem('90.0')
-        item_range_hmin.setTextAlignment(QtCore.Qt.AlignCenter)
-        item_range_hmax = QtGui.QTableWidgetItem('100.0')
-        item_range_hmax.setTextAlignment(QtCore.Qt.AlignCenter)
-        item_range_wtmin = QtGui.QTableWidgetItem('20.0')
-        item_range_wtmin.setTextAlignment(QtCore.Qt.AlignCenter)
-        item_range_wtmax = QtGui.QTableWidgetItem('35.0')
-        item_range_wtmax.setTextAlignment(QtCore.Qt.AlignCenter)
-
-        if led_status == '0':
-            item_range_led = QtGui.QTableWidgetItem('OFF')
-        else:
-            item_range_led = QtGui.QTableWidgetItem('ON')
-        item_range_led.setTextAlignment(QtCore.Qt.AlignCenter)
+        
         for item in self.ui_mainwindow.table_range_display.findItems(addr_long, QtCore.Qt.MatchFixedString):
+            # Item already exists, do not change.
             #self.ui_mainwindow.table_range_display.setItem(item.row(), 0, item_range_addr_long)
+            
             pass
             break
-        else:
+        else:    # Add new item.
+            #  只在初次刷新时，加载一次配置文件，显示到界面。
+            # 后面的界面更新就不从配置文件读取了。
+            # 初次刷新时，要把参数发送到Arduino端，否则二者不同步。
+            # 但是，如果Arduino中途重启，配置就不同步了。
+            config = ConfigProcess()
+            config.load_config()
+            config_info = config.get_config_value(addr_long)
+            # (tmin, tmax, hmin, hmax, wtmin, wtmax, led)
+            if config_info is not None:
+                tmin = config_info[0]
+                tmax = config_info[1]
+                hmin = config_info[2]
+                hmax = config_info[3]
+                wtmin = config_info[4]
+                wtmax = config_info[5]
+                led_status = config_info[6]  # note led_status 
+            else:
+                tmin = '20.0'
+                tmax = '30.0'
+                hmin = '90.0'
+                hmax = '100.0'
+                wtmin = '20.0'
+                wtmax = '35.0'
+            
+            item_range_tmin = QtGui.QTableWidgetItem(tmin)
+            item_range_tmin.setTextAlignment(QtCore.Qt.AlignCenter)
+            item_range_tmax = QtGui.QTableWidgetItem(tmax)
+            item_range_tmax.setTextAlignment(QtCore.Qt.AlignCenter)
+            item_range_hmin = QtGui.QTableWidgetItem(hmin)
+            item_range_hmin.setTextAlignment(QtCore.Qt.AlignCenter)
+            item_range_hmax = QtGui.QTableWidgetItem(hmax)
+            item_range_hmax.setTextAlignment(QtCore.Qt.AlignCenter)
+            item_range_wtmin = QtGui.QTableWidgetItem(wtmin)
+            item_range_wtmin.setTextAlignment(QtCore.Qt.AlignCenter)
+            item_range_wtmax = QtGui.QTableWidgetItem(wtmax)
+            item_range_wtmax.setTextAlignment(QtCore.Qt.AlignCenter)
+
+            if led_status == '0':
+                item_range_led = QtGui.QTableWidgetItem('OFF')
+            else:
+                item_range_led = QtGui.QTableWidgetItem('ON')
+            item_range_led.setTextAlignment(QtCore.Qt.AlignCenter)
+            
             row = self.ui_mainwindow.table_range_display.rowCount()
             self.ui_mainwindow.table_range_display.setRowCount(row + 1)
             self.ui_mainwindow.table_range_display.setItem(row, 0, item_range_addr_long)
@@ -451,6 +480,13 @@ class XbeeThread(QtCore.QThread):
             self.ui_mainwindow.table_range_display.setItem(row, 6, item_range_wtmin)
             self.ui_mainwindow.table_range_display.setItem(row, 7, item_range_wtmax)
             self.ui_mainwindow.table_range_display.setItem(row, 8, item_range_led)
+            addr_long_short = []
+            addr_long_short.append((addr_long, addr_short))
+            send_data = tmin + ',' + tmax + ',' + hmin + ',' + hmax + ',' + \
+                    wtmin + ',' + wtmax + ',' + led_status
+            self.ui_mainwindow.send_config_func(addr_long_short, send_data)
+            print 'update_table_nodeinfo() send config to Arduino.'
+            # Add new item.
 
     def message_received(self, data, database):
         try:
