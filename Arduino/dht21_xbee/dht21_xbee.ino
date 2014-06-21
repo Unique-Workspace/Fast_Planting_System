@@ -51,9 +51,11 @@ static dht DHT;
 static XBee xbee = XBee();
 
 // SH + SL Address of receiving XBee
-XBeeAddress64 addr64 = XBeeAddress64(0x0013a200, 0x40b41060); //39
+XBeeAddress64 addr64 = XBeeAddress64(0x0, 0x0); //0x0013a200, 0x40b41060, 39
 ZBTxRequest zbTx = ZBTxRequest(addr64, payload, sizeof(payload));
-ZBTxStatusResponse txStatus = ZBTxStatusResponse();
+static boolean dest_addr_flag = FALSE;
+static uint32_t addr_low, addr_high;
+ZBTxStatusResponse txStatus = ZBTxStatusResponse();  // receive use it.
 
 // create reusable response objects for responses we expect to handle 
 static ZBRxResponse rx = ZBRxResponse();
@@ -207,20 +209,20 @@ void parse_rxdata(char rx_data[])
     char strKey[8];
     char strNum[8];
     
-  for(i=0; i<strlen(rx_data); i++)
-  {
-      strData[i] = rx_data[i];
-  }
-  strData[i] = '\0';
-  mySerial.println(strData);
-  
-  // split the string "TRmin:20.0,TRmax:30.0,Hmin:90.0,Hmax:100.0,TWmin:20.0,TWmax:35.0"
-  char *ptr = strtok(strData,",");
-  for(j = 0; j<PARAMNUM && ptr != NULL; j++)
-  {
-     strcpy(strSubData[j], ptr);  // save the string to strSubData[][]
-     ptr = strtok(NULL, ","); 
-  }
+    for(i=0; i<strlen(rx_data); i++)
+    {
+        strData[i] = rx_data[i];
+    }
+    strData[i] = '\0';
+    mySerial.println(strData);
+      
+    // split the string "TRmin:20.0,TRmax:30.0,Hmin:90.0,Hmax:100.0,TWmin:20.0,TWmax:35.0"
+    char *ptr = strtok(strData,",");
+    for(j = 0; j<PARAMNUM && ptr != NULL; j++)
+    {
+       strcpy(strSubData[j], ptr);  // save the string to strSubData[][]
+       ptr = strtok(NULL, ","); 
+    }
 
     // extract the params from each string strSubData[][].
     //#格式："TRmin,TRmax,Hmin,Hmax,TWmin,TWmax"
@@ -245,11 +247,63 @@ void parse_rxdata(char rx_data[])
     led_func(led_ctrl);
 }
 
+void parse_rxaddr(uint8_t rx_addr[], char rx_data[])
+{
+    int i;
+    uint8_t strAddr[BUFLEN];
+    char strData[BUFLEN];
+    char *strScan = "scan";
+    
+    // already get the dest addr, no need to resolve it anymore.
+    if(dest_addr_flag)
+        return;
+        
+    for(i=0; i<strlen(rx_data); i++)
+    {
+        strData[i] = rx_data[i];
+    }
+    strData[i] = '\0';
+    mySerial.println(strData);
+    // detect if it's a broadcast "scan" data. if not, return.
+    if(0 != strncmp(strData, strScan, strlen(strScan)))
+        return ;
+    
+    for(i=0; i<8; i++)
+    {
+        strAddr[i] = rx_addr[i];
+    }
+    strAddr[i] = '\0';
+    addr_low = 0;
+    addr_high = 0;
+    for(i = 0; i < 4; i++)
+    {
+        //mySerial.println(rx_addr[i], HEX);
+        addr_high |= strAddr[i];
+        if(i<3)
+            addr_high = addr_high << 8;
+    }
+    for(; i < 8; i++)
+    {
+        //mySerial.println(rx_addr[i], HEX);
+        addr_low |= strAddr[i];
+        if(i<7)
+            addr_low = addr_low << 8;
+    }
+    mySerial.println(addr_high, HEX);
+    mySerial.println(addr_low, HEX);
+    addr64 = XBeeAddress64(addr_high, addr_low); //0x0013a200, 0x40b41060, 39
+    zbTx = ZBTxRequest(addr64, payload, sizeof(payload));
+    dest_addr_flag = TRUE;
+}
+
 void send_data()
 {
     int i, j;
     double water_tempe;
 
+    if(!dest_addr_flag)
+        return ;
+        
     // READ DATA
     //mySerial.print("DHT21, \t");
     int chk = DHT.read22(DHT11_PIN);
@@ -319,6 +373,7 @@ void receive_data()
 {
     int i;
     char rx_data[BUFLEN];
+    uint8_t rx_addr[BUFLEN];
 
      // RECEIVE DATA
     // after sending a tx request, we expect a status response
@@ -371,7 +426,7 @@ void receive_data()
           ***/
           for (i = 0; i < rx.getDataLength(); i++) 
           {
-               /***
+              /***
               mySerial.print("payload [");
               mySerial.print(i, DEC);
               mySerial.print("] is ");
@@ -380,17 +435,20 @@ void receive_data()
               rx_data[i] = rx.getData()[i];
           }
           rx_data[i++] = '\0';
-          
           parse_rxdata(rx_data);
         
-          /***
-           for (i = 0; i < xbee.getResponse().getFrameDataLength(); i++) {
-            mySerial.print("frame data [");
-            mySerial.print(i, DEC);
-            mySerial.print("] is ");
-            mySerial.println(xbee.getResponse().getFrameData()[i], HEX);
+          for (i = 0; i < xbee.getResponse().getFrameDataLength(); i++) 
+          {
+              /***
+              mySerial.print("frame data [");
+              mySerial.print(i, DEC);
+              mySerial.print("] is ");
+              mySerial.println(xbee.getResponse().getFrameData()[i], HEX);
+              ***/
+              rx_addr[i] = xbee.getResponse().getFrameData()[i];
           }
-          ***/
+          rx_addr[i++] = '\0';          
+          parse_rxaddr(rx_addr, rx_data);
         }
     } 
     else if (xbee.getResponse().isError()) 
@@ -401,7 +459,7 @@ void receive_data()
     else 
     {
         // local XBee did not provide a timely TX Status Response -- should not happen
-        mySerial.println("No TX Status Response");
+        //mySerial.println("No TX Status Response");
     }
 }
 
@@ -410,7 +468,7 @@ static int protothread_send(struct pt *pt)
     PT_BEGIN(pt);  
     while(1) 
     {  
-        PT_WAIT_UNTIL(pt, counter_send==20); 
+        PT_WAIT_UNTIL(pt, counter_send==10); 
         send_data();
         counter_send=0;   
     } 

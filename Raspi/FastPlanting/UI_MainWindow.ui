@@ -108,9 +108,9 @@
              <property name="orientation">
               <enum>Qt::Horizontal</enum>
              </property>
-             <widget class="QPushButton" name="button_config">
+             <widget class="QPushButton" name="button_scan">
               <property name="text">
-               <string>配置</string>
+               <string>扫描</string>
               </property>
               <property name="checkable">
                <bool>false</bool>

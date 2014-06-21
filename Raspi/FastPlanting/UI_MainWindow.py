@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'UI_MainWindow.ui'
 #
-# Created: Sat Jun 07 17:59:47 2014
+# Created: Sat Jun 21 12:25:20 2014
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -83,9 +83,9 @@ class Ui_MainWindow(object):
         self.splitter.setMinimumSize(QtCore.QSize(0, 50))
         self.splitter.setOrientation(QtCore.Qt.Horizontal)
         self.splitter.setObjectName(_fromUtf8("splitter"))
-        self.button_config = QtGui.QPushButton(self.splitter)
-        self.button_config.setCheckable(False)
-        self.button_config.setObjectName(_fromUtf8("button_config"))
+        self.button_scan = QtGui.QPushButton(self.splitter)
+        self.button_scan.setCheckable(False)
+        self.button_scan.setObjectName(_fromUtf8("button_scan"))
         self.button_open_serial = QtGui.QPushButton(self.splitter)
         self.button_open_serial.setObjectName(_fromUtf8("button_open_serial"))
         self.verticalLayout.addWidget(self.splitter)
@@ -183,7 +183,7 @@ class Ui_MainWindow(object):
         self.groupBox.setTitle(_translate("MainWindow", "控制", None))
         self.label_2.setText(_translate("MainWindow", "时间日期：", None))
         self.label.setText(_translate("MainWindow", "提醒：", None))
-        self.button_config.setText(_translate("MainWindow", "配置", None))
+        self.button_scan.setText(_translate("MainWindow", "扫描", None))
         self.button_open_serial.setText(_translate("MainWindow", "连接", None))
         self.tab_display.setTabText(self.tab_display.indexOf(self.tab), _translate("MainWindow", "显示", None))
         self.groupBox_2.setTitle(_translate("MainWindow", "范围显示", None))
