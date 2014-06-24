@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'UI_SerialDialog.ui'
 #
-# Created: Sat Jun 21 12:25:20 2014
+# Created: Tue Jun 24 21:44:12 2014
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!

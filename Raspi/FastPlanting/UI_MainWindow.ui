@@ -82,10 +82,42 @@
             </widget>
            </item>
            <item>
-            <widget class="QTimeEdit" name="timeEdit"/>
+            <widget class="QLCDNumber" name="lcdNumber_time">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>40</height>
+              </size>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::Box</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Raised</enum>
+             </property>
+             <property name="lineWidth">
+              <number>1</number>
+             </property>
+             <property name="midLineWidth">
+              <number>0</number>
+             </property>
+             <property name="numDigits">
+              <number>8</number>
+             </property>
+            </widget>
            </item>
            <item>
-            <widget class="QDateEdit" name="dateEdit"/>
+            <widget class="QLCDNumber" name="lcdNumber_date">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>40</height>
+              </size>
+             </property>
+             <property name="numDigits">
+              <number>10</number>
+             </property>
+            </widget>
            </item>
            <item>
             <widget class="QLabel" name="label">
@@ -125,11 +157,11 @@
            </item>
           </layout>
           <zorder>splitter</zorder>
-          <zorder>dateEdit</zorder>
           <zorder>plainTextEdit</zorder>
           <zorder>label</zorder>
           <zorder>label_2</zorder>
-          <zorder>timeEdit</zorder>
+          <zorder>lcdNumber_time</zorder>
+          <zorder>lcdNumber_date</zorder>
          </widget>
         </item>
        </layout>

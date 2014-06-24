@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'UI_MainWindow.ui'
 #
-# Created: Sat Jun 21 12:25:20 2014
+# Created: Tue Jun 24 21:44:12 2014
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -67,12 +67,20 @@ class Ui_MainWindow(object):
         self.label_2 = QtGui.QLabel(self.groupBox)
         self.label_2.setObjectName(_fromUtf8("label_2"))
         self.verticalLayout.addWidget(self.label_2)
-        self.timeEdit = QtGui.QTimeEdit(self.groupBox)
-        self.timeEdit.setObjectName(_fromUtf8("timeEdit"))
-        self.verticalLayout.addWidget(self.timeEdit)
-        self.dateEdit = QtGui.QDateEdit(self.groupBox)
-        self.dateEdit.setObjectName(_fromUtf8("dateEdit"))
-        self.verticalLayout.addWidget(self.dateEdit)
+        self.lcdNumber_time = QtGui.QLCDNumber(self.groupBox)
+        self.lcdNumber_time.setMinimumSize(QtCore.QSize(0, 40))
+        self.lcdNumber_time.setFrameShape(QtGui.QFrame.Box)
+        self.lcdNumber_time.setFrameShadow(QtGui.QFrame.Raised)
+        self.lcdNumber_time.setLineWidth(1)
+        self.lcdNumber_time.setMidLineWidth(0)
+        self.lcdNumber_time.setNumDigits(8)
+        self.lcdNumber_time.setObjectName(_fromUtf8("lcdNumber_time"))
+        self.verticalLayout.addWidget(self.lcdNumber_time)
+        self.lcdNumber_date = QtGui.QLCDNumber(self.groupBox)
+        self.lcdNumber_date.setMinimumSize(QtCore.QSize(0, 40))
+        self.lcdNumber_date.setNumDigits(10)
+        self.lcdNumber_date.setObjectName(_fromUtf8("lcdNumber_date"))
+        self.verticalLayout.addWidget(self.lcdNumber_date)
         self.label = QtGui.QLabel(self.groupBox)
         self.label.setObjectName(_fromUtf8("label"))
         self.verticalLayout.addWidget(self.label)

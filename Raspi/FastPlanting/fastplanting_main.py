@@ -147,10 +147,17 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         for i in range(1, 9):
             self.table_range_display.horizontalHeader().setResizeMode(i, QtGui.QHeaderView.Stretch)
 
-        #self.listTableView.setColumnWidth()
+        #self.setSegmentStyle(QtGui.QLCDNumber.Filled)
+
+        timer = QtCore.QTimer(self)
+        timer.timeout.connect(self.show_time)
+        timer.start(1000)
+
+        self.show_time()
+
         # define serial port
         self.serial = serial.Serial()
-        self.serial_port =  '/dev/ttyAMA0'
+        self.serial_port = '/dev/ttyAMA0'
         self.serial_baundrate = 115200
         # Create API object, which spawns a new thread
         self.xbee = ZigBee(self.serial)
@@ -167,6 +174,15 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         self.xbee_thread.xbee_thread_stop()
         self.xbee_thread.wait()   # must call wait() to quit the xbee thread.
         print 'FastPlantingFrame del.'
+
+    def show_time(self):
+        time = QtCore.QTime.currentTime()
+        text = time.toString('hh:mm:ss')
+        self.lcdNumber_time.display(text)
+
+        date = QtCore.QDate.currentDate()
+        text = date.toString('yyyy.MM.dd')
+        self.lcdNumber_date.display(text)
 
     def scan_node(self):
         print 'scan_node.'
