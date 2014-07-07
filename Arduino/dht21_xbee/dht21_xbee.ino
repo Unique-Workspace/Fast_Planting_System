@@ -23,7 +23,7 @@
 /* PIN DEFINE END */
 
 /* DATA AREA BEGIN */
-#define HUMIDITY_TIME_DELAY  300
+#define HUMIDITY_TIME_DELAY  10
 #define PAYLOAD_LENGTH 40
 #define BUFLEN 80
 #define SUB_BUFLEN 15
@@ -104,8 +104,6 @@ void humidity_func(double humidity)
   else if(humidity >= humi_max)
   {
     // ok
-    mySerial.println(humidity);
-    mySerial.println(humi_max);
     mySerial.println("\t humidity >=99");
     if(humi_delay > HUMIDITY_TIME_DELAY)
     {

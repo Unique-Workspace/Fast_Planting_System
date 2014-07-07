@@ -124,9 +124,11 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
 
         QtCore.QObject.connect(self.button_open_serial, QtCore.SIGNAL(_fromUtf8("clicked()")), self.open_serial)
         QtCore.QObject.connect(self.button_scan, QtCore.SIGNAL(_fromUtf8("clicked()")), self.scan_node)
+        QtCore.QObject.connect(self.menu_scan_node, QtCore.SIGNAL(_fromUtf8("triggered()")), self.scan_node)
         QtCore.QObject.connect(self.menu_config_serial, QtCore.SIGNAL(_fromUtf8("triggered()")), self.config_serial)
         QtCore.QObject.connect(self.pushButton_config, QtCore.SIGNAL(_fromUtf8("clicked()")), self.send_config)
         QtCore.QObject.connect(self.pushButton_save, QtCore.SIGNAL(_fromUtf8("clicked()")), self.save_config)
+        QtCore.QObject.connect(self.menu_save_config, QtCore.SIGNAL(_fromUtf8("triggered()")), self.save_config)
 
         #self.listTableView.setModel(self.item_model)
         self.table_node_info.horizontalHeader().setDefaultSectionSize(90)

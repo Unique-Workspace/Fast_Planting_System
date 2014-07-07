@@ -230,10 +230,10 @@
      <string>操作</string>
     </property>
     <addaction name="menu_config_serial"/>
-    <addaction name="action_scan_node"/>
+    <addaction name="menu_scan_node"/>
     <addaction name="action_5"/>
     <addaction name="separator"/>
-    <addaction name="action_7"/>
+    <addaction name="menu_save_config"/>
     <addaction name="action_8"/>
     <addaction name="menu_exit"/>
    </widget>
@@ -272,7 +272,7 @@
     <string>查看全部</string>
    </property>
   </action>
-  <action name="action_scan_node">
+  <action name="menu_scan_node">
    <property name="text">
     <string>扫描节点</string>
    </property>
@@ -282,14 +282,14 @@
     <string>增加节点</string>
    </property>
   </action>
-  <action name="action_7">
+  <action name="menu_save_config">
    <property name="text">
-    <string>保存配置</string>
+    <string>保存设置</string>
    </property>
   </action>
   <action name="action_8">
    <property name="text">
-    <string>配置另存为</string>
+    <string>设置另存为</string>
    </property>
   </action>
   <action name="menu_exit">

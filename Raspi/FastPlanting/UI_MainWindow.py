@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'UI_MainWindow.ui'
 #
-# Created: Tue Jun 24 21:44:12 2014
+# Created: Mon Jul 07 22:12:57 2014
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -148,12 +148,12 @@ class Ui_MainWindow(object):
         self.action_2.setObjectName(_fromUtf8("action_2"))
         self.action_3 = QtGui.QAction(MainWindow)
         self.action_3.setObjectName(_fromUtf8("action_3"))
-        self.action_scan_node = QtGui.QAction(MainWindow)
-        self.action_scan_node.setObjectName(_fromUtf8("action_scan_node"))
+        self.menu_scan_node = QtGui.QAction(MainWindow)
+        self.menu_scan_node.setObjectName(_fromUtf8("menu_scan_node"))
         self.action_5 = QtGui.QAction(MainWindow)
         self.action_5.setObjectName(_fromUtf8("action_5"))
-        self.action_7 = QtGui.QAction(MainWindow)
-        self.action_7.setObjectName(_fromUtf8("action_7"))
+        self.menu_save_config = QtGui.QAction(MainWindow)
+        self.menu_save_config.setObjectName(_fromUtf8("menu_save_config"))
         self.action_8 = QtGui.QAction(MainWindow)
         self.action_8.setObjectName(_fromUtf8("action_8"))
         self.menu_exit = QtGui.QAction(MainWindow)
@@ -165,10 +165,10 @@ class Ui_MainWindow(object):
         self.menu_config_serial = QtGui.QAction(MainWindow)
         self.menu_config_serial.setObjectName(_fromUtf8("menu_config_serial"))
         self.menu.addAction(self.menu_config_serial)
-        self.menu.addAction(self.action_scan_node)
+        self.menu.addAction(self.menu_scan_node)
         self.menu.addAction(self.action_5)
         self.menu.addSeparator()
-        self.menu.addAction(self.action_7)
+        self.menu.addAction(self.menu_save_config)
         self.menu.addAction(self.action_8)
         self.menu.addAction(self.menu_exit)
         self.menu_2.addAction(self.action_3)
@@ -205,10 +205,10 @@ class Ui_MainWindow(object):
         self.action.setText(_translate("MainWindow", "调试", None))
         self.action_2.setText(_translate("MainWindow", "关于", None))
         self.action_3.setText(_translate("MainWindow", "查看全部", None))
-        self.action_scan_node.setText(_translate("MainWindow", "扫描节点", None))
+        self.menu_scan_node.setText(_translate("MainWindow", "扫描节点", None))
         self.action_5.setText(_translate("MainWindow", "增加节点", None))
-        self.action_7.setText(_translate("MainWindow", "保存配置", None))
-        self.action_8.setText(_translate("MainWindow", "配置另存为", None))
+        self.menu_save_config.setText(_translate("MainWindow", "保存设置", None))
+        self.action_8.setText(_translate("MainWindow", "设置另存为", None))
         self.menu_exit.setText(_translate("MainWindow", "退出", None))
         self.action_10.setText(_translate("MainWindow", "单独查看", None))
         self.action_11.setText(_translate("MainWindow", "曲线视图", None))
