@@ -14,17 +14,18 @@ from PyQt4 import QtCore, QtGui
 from UI_MainWindow import Ui_MainWindow
 from UI_SerialDialog import Ui_SerialDialog
 from XbeeThread import XbeeThread
+import PyQt4.Qwt5 as Qwt
+from PyQt4.Qwt5.anynumpy import *
+from xbee import ZigBee
+import serial
+import sys
+from config_process import ConfigProcess
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
     def _fromUtf8(s):
         return s
-
-from xbee import ZigBee
-import serial
-import sys
-from config_process import ConfigProcess
 
 BROADCAST_ADDR_LONG = b'\x00\x00\x00\x00\x00\x00\xff\xff'
 BROADCAST_ADDR_SHORT = b'\xff\xfe'
@@ -89,6 +90,35 @@ class ComboxDelegate(QtGui.QItemDelegate):
     #   self.commitData.emit(self.sender())
 
 
+class QwtplotDelegate(QtGui.QItemDelegate):
+    def createEditor(self, parent, option, index):
+        print 'QwtplotDelegate:creatEditor'
+        if index.column() == 0:
+            qwtplot_display = Qwt.QwtPlot(parent)
+            qwtplot_display.setCanvasBackground(QtCore.Qt.white)
+
+            text = "Humidity & Temprature"
+            qwtplot_display.setTitle(text)
+             # axes
+            qwtplot_display.enableAxis(Qwt.QwtPlot.yRight)
+            qwtplot_display.setAxisTitle(Qwt.QwtPlot.xBottom, u'时间')
+            qwtplot_display.setAxisTitle(Qwt.QwtPlot.yLeft, u'温度[C\u00b0]')
+            qwtplot_display.setAxisTitle(Qwt.QwtPlot.yRight, u'湿度 [\u00b0]')
+            qwtplot_display.setAxisScale(Qwt.QwtPlot.yLeft, 0, 100)
+            qwtplot_display.setAxisScale(Qwt.QwtPlot.yRight, 0, 100)
+            return qwtplot_display
+        else:
+            return 0  # QtGui.QStyledItemDelegate.createEditor(parent, option, index)
+
+    def setEditorData(self, editor, index):
+        print 'QwtplotDelegate:setEditorData'
+        return
+
+    def setModelData(self, editor, model, index):
+        print 'QwtplotDelegate:setModelData'
+        return
+
+
 class SerialDialogFrame(QtGui.QDialog, Ui_SerialDialog):
     def __init__(self, serial_port=None, baund_rate=None):
         super(SerialDialogFrame, self).__init__()
@@ -113,6 +143,96 @@ class SerialDialogFrame(QtGui.QDialog, Ui_SerialDialog):
 
     def get_serial_config(self):
         return self.serialport, self.baundrate
+
+
+HISTORY = 60
+
+
+# 曲线显示时间轴
+class TimeScaleDraw(Qwt.QwtScaleDraw):
+
+    def __init__(self, baseTime, *args):
+        Qwt.QwtScaleDraw.__init__(self, *args)
+        self.baseTime = baseTime
+
+    # __init__()
+
+    def label(self, value):
+        upTime = self.baseTime.addSecs(int(value))
+        return Qwt.QwtText(upTime.toString())
+
+    # label()
+
+# class TimeScaleDraw
+
+
+# 曲线显示类
+class PlotDisplay(Qwt.QwtPlot):
+    def __init__(self, qwt_plot):
+        super(PlotDisplay, self).__init__()
+
+        self.base_sec = 0
+        self.current_sec = QtCore.QDateTime.currentMSecsSinceEpoch()
+        # alias
+        font = self.fontInfo().family()
+
+        self.qwtPlot = qwt_plot
+        text = Qwt.QwtText(u'水温[C\u00b0]')
+        text.setColor(QtCore.Qt.blue)
+        text.setFont(QtGui.QFont(font, 12, QtGui.QFont.Bold))
+        self.qwtPlot.setTitle(text)
+        # axes
+        self.qwtPlot.enableAxis(Qwt.QwtPlot.yRight)
+        text = Qwt.QwtText(u'温度[C\u00b0]')
+        text.setColor(QtCore.Qt.red)
+        text.setFont(QtGui.QFont(font, 12, QtGui.QFont.Bold))
+        self.qwtPlot.setAxisTitle(Qwt.QwtPlot.yLeft, text)
+        text = Qwt.QwtText(u'湿度 [\u00b0]')
+        text.setColor(QtCore.Qt.darkGreen)
+        text.setFont(QtGui.QFont(font, 12, QtGui.QFont.Bold))
+        self.qwtPlot.setAxisTitle(Qwt.QwtPlot.yRight, text)
+        self.qwtPlot.setAxisScale(Qwt.QwtPlot.yLeft, 0, 100)
+        self.qwtPlot.setAxisScale(Qwt.QwtPlot.yRight, 0, 100)
+        self.qwtPlot.setCanvasBackground(QtCore.Qt.white)
+
+        #self.qwtPlot.setAxisTitle(Qwt.QwtPlot.xBottom, u'日期时间')
+        date_time = QtCore.QDateTime.currentDateTime()
+        self.qwtPlot.setAxisScaleDraw(
+            Qwt.QwtPlot.xBottom, TimeScaleDraw(date_time))
+        #self.qwtPlot.setAxisScale(Qwt.QwtPlot.xBottom, 0, HISTORY)
+        self.qwtPlot.setAxisLabelRotation(Qwt.QwtPlot.xBottom, -60.0)
+        self.qwtPlot.setAxisLabelAlignment(
+            Qwt.QwtPlot.xBottom, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+
+        self.x = []
+        self.yt = []
+        self.yh = []
+        self.ytw = []
+        self.curvet = Qwt.QwtPlotCurve("Data Moving Temprature Room")
+        self.curvet.attach(self.qwtPlot)
+        self.curvet.setPen(QtGui.QPen(QtCore.Qt.red))
+        self.curveh = Qwt.QwtPlotCurve("Data Moving Humidity")
+        self.curveh.attach(self.qwtPlot)
+        self.curveh.setPen(QtGui.QPen(QtCore.Qt.darkGreen))
+        self.curvetw = Qwt.QwtPlotCurve("Data Moving Temprature Water")
+        self.curvetw.attach(self.qwtPlot)
+        self.curvetw.setPen(QtGui.QPen(QtCore.Qt.blue))
+
+    def update_plot(self, temp_room, hum, temp_water):
+        self.current_sec = QtCore.QDateTime.currentMSecsSinceEpoch()
+        time = (self.current_sec - self.base_sec) / 1000.0
+        self.x.append(time)
+        self.yt.append(float(temp_room))
+        self.yh.append(float(hum))
+        self.ytw.append(float(temp_water))
+
+        self.curvet.setData(self.x, self.yt)
+        self.curveh.setData(self.x, self.yh)
+        self.curvetw.setData(self.x, self.ytw)
+
+        self.qwtPlot.replot()
+
+# class PlotDisplay
 
 
 class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
@@ -149,7 +269,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         for i in range(1, 9):
             self.table_range_display.horizontalHeader().setResizeMode(i, QtGui.QHeaderView.Stretch)
 
-        #self.setSegmentStyle(QtGui.QLCDNumber.Filled)
+        self.qwt_plot = PlotDisplay(self.qwtPlot)
 
         timer = QtCore.QTimer(self)
         timer.timeout.connect(self.show_time)
@@ -185,6 +305,19 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         date = QtCore.QDate.currentDate()
         text = date.toString('yyyy.MM.dd')
         self.lcdNumber_date.display(text)
+
+        # For the QwtPlot display
+        if self.table_node_info.rowCount() > 0:
+            item = self.table_node_info.item(0, 2)  # 室内温度
+            temp_room = float(item.text())
+            item = self.table_node_info.item(0, 3)  # 湿度
+            humidity = float(item.text())
+            item = self.table_node_info.item(0, 4)  # 水温
+            temp_water = float(item.text())
+            if self.qwt_plot.base_sec == 0:
+                self.qwt_plot.base_sec = QtCore.QDateTime.currentMSecsSinceEpoch()
+            self.qwt_plot.update_plot(temp_room, humidity, temp_water)
+        # For the QwtPlot display
 
     def scan_node(self):
         print 'scan_node.'

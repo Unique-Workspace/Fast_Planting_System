@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'UI_MainWindow.ui'
 #
-# Created: Mon Jul 07 22:12:57 2014
+# Created: Sun Jul 13 20:23:17 2014
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -99,6 +99,19 @@ class Ui_MainWindow(object):
         self.verticalLayout.addWidget(self.splitter)
         self.horizontalLayout_2.addWidget(self.groupBox)
         self.tab_display.addTab(self.tab, _fromUtf8(""))
+        self.tab_fig = QtGui.QWidget()
+        self.tab_fig.setObjectName(_fromUtf8("tab_fig"))
+        self.verticalLayout_3 = QtGui.QVBoxLayout(self.tab_fig)
+        self.verticalLayout_3.setObjectName(_fromUtf8("verticalLayout_3"))
+        self.groupBox_3 = QtGui.QGroupBox(self.tab_fig)
+        self.groupBox_3.setObjectName(_fromUtf8("groupBox_3"))
+        self.verticalLayout_4 = QtGui.QVBoxLayout(self.groupBox_3)
+        self.verticalLayout_4.setObjectName(_fromUtf8("verticalLayout_4"))
+        self.qwtPlot = Qwt5.QwtPlot(self.groupBox_3)
+        self.qwtPlot.setObjectName(_fromUtf8("qwtPlot"))
+        self.verticalLayout_4.addWidget(self.qwtPlot)
+        self.verticalLayout_3.addWidget(self.groupBox_3)
+        self.tab_display.addTab(self.tab_fig, _fromUtf8(""))
         self.tab_2 = QtGui.QWidget()
         self.tab_2.setObjectName(_fromUtf8("tab_2"))
         self.horizontalLayout_3 = QtGui.QHBoxLayout(self.tab_2)
@@ -194,6 +207,8 @@ class Ui_MainWindow(object):
         self.button_scan.setText(_translate("MainWindow", "扫描", None))
         self.button_open_serial.setText(_translate("MainWindow", "连接", None))
         self.tab_display.setTabText(self.tab_display.indexOf(self.tab), _translate("MainWindow", "显示", None))
+        self.groupBox_3.setTitle(_translate("MainWindow", "温湿度显示", None))
+        self.tab_display.setTabText(self.tab_display.indexOf(self.tab_fig), _translate("MainWindow", "曲线图", None))
         self.groupBox_2.setTitle(_translate("MainWindow", "范围显示", None))
         self.label_3.setText(_translate("MainWindow", "信息显示：", None))
         self.pushButton_config.setText(_translate("MainWindow", "设置生效", None))
@@ -214,6 +229,7 @@ class Ui_MainWindow(object):
         self.action_11.setText(_translate("MainWindow", "曲线视图", None))
         self.menu_config_serial.setText(_translate("MainWindow", "配置串口", None))
 
+from PyQt4 import Qwt5
 
 if __name__ == "__main__":
     import sys
