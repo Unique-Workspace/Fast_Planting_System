@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'UI_MainWindow.ui'
 #
-# Created: Sun Jul 13 20:23:17 2014
+# Created: Mon Jul 14 21:58:07 2014
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -105,11 +105,25 @@ class Ui_MainWindow(object):
         self.verticalLayout_3.setObjectName(_fromUtf8("verticalLayout_3"))
         self.groupBox_3 = QtGui.QGroupBox(self.tab_fig)
         self.groupBox_3.setObjectName(_fromUtf8("groupBox_3"))
-        self.verticalLayout_4 = QtGui.QVBoxLayout(self.groupBox_3)
-        self.verticalLayout_4.setObjectName(_fromUtf8("verticalLayout_4"))
-        self.qwtPlot = Qwt5.QwtPlot(self.groupBox_3)
+        self.gridLayout_2 = QtGui.QGridLayout(self.groupBox_3)
+        self.gridLayout_2.setObjectName(_fromUtf8("gridLayout_2"))
+        self.splitter_4 = QtGui.QSplitter(self.groupBox_3)
+        self.splitter_4.setOrientation(QtCore.Qt.Horizontal)
+        self.splitter_4.setObjectName(_fromUtf8("splitter_4"))
+        self.splitter_3 = QtGui.QSplitter(self.splitter_4)
+        self.splitter_3.setOrientation(QtCore.Qt.Vertical)
+        self.splitter_3.setObjectName(_fromUtf8("splitter_3"))
+        self.table_plot_node = QtGui.QTableWidget(self.splitter_3)
+        self.table_plot_node.setMaximumSize(QtCore.QSize(200, 16777215))
+        self.table_plot_node.setColumnCount(0)
+        self.table_plot_node.setObjectName(_fromUtf8("table_plot_node"))
+        self.table_plot_node.setRowCount(0)
+        self.combo_show_range = QtGui.QComboBox(self.splitter_3)
+        self.combo_show_range.setMaximumSize(QtCore.QSize(16777215, 40))
+        self.combo_show_range.setObjectName(_fromUtf8("combo_show_range"))
+        self.qwtPlot = Qwt5.QwtPlot(self.splitter_4)
         self.qwtPlot.setObjectName(_fromUtf8("qwtPlot"))
-        self.verticalLayout_4.addWidget(self.qwtPlot)
+        self.gridLayout_2.addWidget(self.splitter_4, 0, 0, 1, 1)
         self.verticalLayout_3.addWidget(self.groupBox_3)
         self.tab_display.addTab(self.tab_fig, _fromUtf8(""))
         self.tab_2 = QtGui.QWidget()

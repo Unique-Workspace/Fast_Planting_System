@@ -145,9 +145,6 @@ class SerialDialogFrame(QtGui.QDialog, Ui_SerialDialog):
         return self.serialport, self.baundrate
 
 
-HISTORY = 60
-
-
 # 曲线显示时间轴
 class TimeScaleDraw(Qwt.QwtScaleDraw):
 
@@ -232,6 +229,12 @@ class PlotDisplay(Qwt.QwtPlot):
 
         self.qwtPlot.replot()
 
+    def clean_plot(self):
+        self.curvet.setData([], [])
+        self.curveh.setData([], [])
+        self.curvetw.setData([], [])
+        self.qwtPlot.replot()
+        #print 'PlotDisplay.clean_plot()'
 # class PlotDisplay
 
 
@@ -249,6 +252,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         QtCore.QObject.connect(self.pushButton_config, QtCore.SIGNAL(_fromUtf8("clicked()")), self.send_config)
         QtCore.QObject.connect(self.pushButton_save, QtCore.SIGNAL(_fromUtf8("clicked()")), self.save_config)
         QtCore.QObject.connect(self.menu_save_config, QtCore.SIGNAL(_fromUtf8("triggered()")), self.save_config)
+        QtCore.QObject.connect(self.table_plot_node, QtCore.SIGNAL(_fromUtf8("itemClicked(QTableWidgetItem*)")), self.refresh_plot)
 
         #self.listTableView.setModel(self.item_model)
         self.table_node_info.horizontalHeader().setDefaultSectionSize(90)
@@ -269,7 +273,14 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         for i in range(1, 9):
             self.table_range_display.horizontalHeader().setResizeMode(i, QtGui.QHeaderView.Stretch)
 
+        self.table_plot_node.horizontalHeader().setDefaultSectionSize(90)
+        self.table_plot_node.setColumnCount(1)
+        self.table_plot_node.setHorizontalHeaderLabels((u"物理地址",))
+        self.table_plot_node.horizontalHeader().setResizeMode(0, QtGui.QHeaderView.Stretch)
+
         self.qwt_plot = PlotDisplay(self.qwtPlot)
+        self.selected_plot_row = -1
+        self.selected_plot_text = ''
 
         timer = QtCore.QTimer(self)
         timer.timeout.connect(self.show_time)
@@ -297,6 +308,40 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         self.xbee_thread.wait()   # must call wait() to quit the xbee thread.
         print 'FastPlantingFrame del.'
 
+    # 用户点击节点条目，触发此函数进行对应条目的数据显示。
+    def refresh_plot(self, selected_item):
+        new_selected_row = selected_item.row()
+        if new_selected_row != self.selected_plot_row:
+            self.selected_plot_row = new_selected_row
+            self.selected_plot_text = selected_item.text()
+            self.startTimer(1000)    # 延时不需太短，5~10s为宜, 注意此timer在多次启动后能否自动回收, 待测试。
+            print 'start plot timer.'
+        else:
+            print 'already selected ' + str(new_selected_row)
+
+    # For the QwtPlot display
+    def timerEvent(self, e):
+        # 此处可以载入从数据库读出的历史数据，以列表形式传递给 self.qwt_plot.update_plot 进行刷新。
+        # 然后再往下执行，进行当前数据更新。
+        if self.table_node_info.rowCount() > 0:
+            item = self.table_node_info.item(self.selected_plot_row, 0)
+            if item.text() != self.selected_plot_text:   # 选中节点不存在，则清除plot,并返回.
+                print 'should clean ' + self.selected_plot_text
+                self.qwt_plot.clean_plot()
+                return
+            item = self.table_node_info.item(self.selected_plot_row, 2)  # 室内温度
+            temp_room = float(item.text())
+            item = self.table_node_info.item(self.selected_plot_row, 3)  # 湿度
+            humidity = float(item.text())
+            item = self.table_node_info.item(self.selected_plot_row, 4)  # 水温
+            temp_water = float(item.text())
+            if self.qwt_plot.base_sec == 0:
+                self.qwt_plot.base_sec = QtCore.QDateTime.currentMSecsSinceEpoch()
+            self.qwt_plot.update_plot(temp_room, humidity, temp_water)
+        elif self.table_node_info.rowCount() <= 0:  # 列表空，则清除plot
+            self.qwt_plot.clean_plot()
+    # For the QwtPlot display
+
     def show_time(self):
         time = QtCore.QTime.currentTime()
         text = time.toString('hh:mm:ss')
@@ -305,19 +350,6 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         date = QtCore.QDate.currentDate()
         text = date.toString('yyyy.MM.dd')
         self.lcdNumber_date.display(text)
-
-        # For the QwtPlot display
-        if self.table_node_info.rowCount() > 0:
-            item = self.table_node_info.item(0, 2)  # 室内温度
-            temp_room = float(item.text())
-            item = self.table_node_info.item(0, 3)  # 湿度
-            humidity = float(item.text())
-            item = self.table_node_info.item(0, 4)  # 水温
-            temp_water = float(item.text())
-            if self.qwt_plot.base_sec == 0:
-                self.qwt_plot.base_sec = QtCore.QDateTime.currentMSecsSinceEpoch()
-            self.qwt_plot.update_plot(temp_room, humidity, temp_water)
-        # For the QwtPlot display
 
     def scan_node(self):
         print 'scan_node.'
@@ -410,7 +442,6 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
                     return
                 wtemp_min_data = str(wtemp_min)
                 wtemp_max_data = str(wtemp_max)
-
                 
                 #格式："TRmin,TRmax,Hmin,Hmax,TWmin,TWmax"
                 #      20.0,30.0,90.0,100.0,20.0,35.0
@@ -418,10 +449,8 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
                     wtemp_min_data + ',' + wtemp_max_data + ',' + led_status
                 print send_data
                 self.send_config_func(addr_long_short, send_data)
-                
-                
+
     def send_config_func(self, addr_long_short, send_data):
-        
         try:
             for addr in addr_long_short:
                 addr_long = str(addr[0]).decode('hex')
@@ -442,8 +471,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
                     self.line_config_status.setText(u'设置成功！')
         except Exception, e:
                 print '[Error]set_config() Transfer Fail!!', e
-                        
-                        
+
     def save_config(self):
         config = ConfigProcess()
         config.load_config()

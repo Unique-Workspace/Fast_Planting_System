@@ -176,9 +176,38 @@
           <property name="title">
            <string>温湿度显示</string>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout_4">
-           <item>
-            <widget class="QwtPlot" name="qwtPlot"/>
+          <layout class="QGridLayout" name="gridLayout_2">
+           <item row="0" column="0">
+            <widget class="QSplitter" name="splitter_4">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <widget class="QSplitter" name="splitter_3">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <widget class="QTableWidget" name="table_plot_node">
+               <property name="maximumSize">
+                <size>
+                 <width>200</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="columnCount">
+                <number>0</number>
+               </property>
+              </widget>
+              <widget class="QComboBox" name="combo_show_range">
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </widget>
+             </widget>
+             <widget class="QwtPlot" name="qwtPlot"/>
+            </widget>
            </item>
           </layout>
          </widget>

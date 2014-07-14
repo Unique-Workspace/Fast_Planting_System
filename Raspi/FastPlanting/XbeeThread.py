@@ -46,6 +46,9 @@ class XbeeThread(QtCore.QThread):
 
                 for item in self.ui_mainwindow.table_range_display.findItems(key, QtCore.Qt.MatchFixedString):
                     self.ui_mainwindow.table_range_display.removeRow(item.row())
+
+                for item in self.ui_mainwindow.table_plot_node.findItems(key, QtCore.Qt.MatchFixedString):
+                    self.ui_mainwindow.table_plot_node.removeRow(item.row())
         self.addr_dict_last = copy.deepcopy(self.addr_dict_current)
         self.timer = threading.Timer(TIMER_DELAY, self.timer_func_refresh_table)
         self.timer.start()
@@ -123,7 +126,7 @@ class XbeeThread(QtCore.QThread):
         item_range_addr_short.setFlags(item_range_addr_short.flags() & ~QtCore.Qt.ItemIsEditable)
         item_range_addr_short.setTextAlignment(QtCore.Qt.AlignCenter)
 
-
+        # table_range_display refresh.
         for item in self.ui_mainwindow.table_range_display.findItems(addr_long, QtCore.Qt.MatchFixedString):
             # Item already exists, do not change.
             #self.ui_mainwindow.table_range_display.setItem(item.row(), 0, item_range_addr_long)
@@ -192,6 +195,19 @@ class XbeeThread(QtCore.QThread):
             self.ui_mainwindow.send_config_func(addr_long_short, send_data)
             print 'update_table_nodeinfo() send config to Arduino.'
             # Add new item.
+
+        # table_plot_node display.
+        item_plot_addr_long = QtGui.QTableWidgetItem(addr_long)
+        item_plot_addr_long.setFlags(item_plot_addr_long.flags() & ~QtCore.Qt.ItemIsEditable)
+        item_plot_addr_long.setTextAlignment(QtCore.Qt.AlignCenter)
+        for item in self.ui_mainwindow.table_plot_node.findItems(addr_long, QtCore.Qt.MatchFixedString):
+            # Item already exists, do not change.
+            pass
+            break
+        else:    # Add new item.
+            row = self.ui_mainwindow.table_plot_node.rowCount()
+            self.ui_mainwindow.table_plot_node.setRowCount(row + 1)
+            self.ui_mainwindow.table_plot_node.setItem(row, 0, item_plot_addr_long)
 
     def message_received(self, data, database):
         try:
