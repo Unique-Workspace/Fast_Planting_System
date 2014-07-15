@@ -15,7 +15,7 @@ from UI_MainWindow import Ui_MainWindow
 from UI_SerialDialog import Ui_SerialDialog
 from XbeeThread import XbeeThread
 import PyQt4.Qwt5 as Qwt
-from PyQt4.Qwt5.anynumpy import *
+import PyQt4.Qwt5.anynumpy as np
 from xbee import ZigBee
 import serial
 import sys
@@ -90,35 +90,6 @@ class ComboxDelegate(QtGui.QItemDelegate):
     #   self.commitData.emit(self.sender())
 
 
-class QwtplotDelegate(QtGui.QItemDelegate):
-    def createEditor(self, parent, option, index):
-        print 'QwtplotDelegate:creatEditor'
-        if index.column() == 0:
-            qwtplot_display = Qwt.QwtPlot(parent)
-            qwtplot_display.setCanvasBackground(QtCore.Qt.white)
-
-            text = "Humidity & Temprature"
-            qwtplot_display.setTitle(text)
-             # axes
-            qwtplot_display.enableAxis(Qwt.QwtPlot.yRight)
-            qwtplot_display.setAxisTitle(Qwt.QwtPlot.xBottom, u'时间')
-            qwtplot_display.setAxisTitle(Qwt.QwtPlot.yLeft, u'温度[C\u00b0]')
-            qwtplot_display.setAxisTitle(Qwt.QwtPlot.yRight, u'湿度 [\u00b0]')
-            qwtplot_display.setAxisScale(Qwt.QwtPlot.yLeft, 0, 100)
-            qwtplot_display.setAxisScale(Qwt.QwtPlot.yRight, 0, 100)
-            return qwtplot_display
-        else:
-            return 0  # QtGui.QStyledItemDelegate.createEditor(parent, option, index)
-
-    def setEditorData(self, editor, index):
-        print 'QwtplotDelegate:setEditorData'
-        return
-
-    def setModelData(self, editor, model, index):
-        print 'QwtplotDelegate:setModelData'
-        return
-
-
 class SerialDialogFrame(QtGui.QDialog, Ui_SerialDialog):
     def __init__(self, serial_port=None, baund_rate=None):
         super(SerialDialogFrame, self).__init__()
@@ -148,28 +119,48 @@ class SerialDialogFrame(QtGui.QDialog, Ui_SerialDialog):
 # 曲线显示时间轴
 class TimeScaleDraw(Qwt.QwtScaleDraw):
 
-    def __init__(self, baseTime, *args):
+    def __init__(self, base_time, *args):
         Qwt.QwtScaleDraw.__init__(self, *args)
-        self.baseTime = baseTime
+        self.base_time = base_time
 
     # __init__()
 
     def label(self, value):
-        upTime = self.baseTime.addSecs(int(value))
-        return Qwt.QwtText(upTime.toString())
+        up_time = self.base_time.addSecs(int(value))
+        return Qwt.QwtText(up_time.toString())
 
     # label()
 
 # class TimeScaleDraw
 
+TROOM = 'TRoom'
+TWATER = 'Twater'
+HUMIDITY = 'Humidity'
+DELAY_TIME = 1000
+ONE_MINUTE = 10  # test
+TEN_MINUTES = (10*ONE_MINUTE)
+THIRTY_MINUTES = (30*ONE_MINUTE)
+ONE_HOUR = (60*ONE_MINUTE)
+THREE_HOURS = (3*ONE_HOUR)
+SIX_HOURS = (6*ONE_HOUR)
+TWELVE_HOURS = (12*ONE_HOUR)
+ONE_DAY = (24*ONE_HOUR)
+THREE_DAYS = (3*ONE_DAY)
+SEVEN_DAYS = (7*ONE_DAY)
+ONE_MONTH = (30*ONE_DAY)
+ALL_TIME = 0
 
 # 曲线显示类
 class PlotDisplay(Qwt.QwtPlot):
     def __init__(self, qwt_plot):
         super(PlotDisplay, self).__init__()
 
-        self.base_sec = 0
-        self.current_sec = QtCore.QDateTime.currentMSecsSinceEpoch()
+        self.curves = {}
+        self.data = {}
+        self.time_data = []
+        self.time_limit = ALL_TIME
+        self.base_msec = 0
+        self.current_msec = QtCore.QDateTime.currentMSecsSinceEpoch()
         # alias
         font = self.fontInfo().family()
 
@@ -193,47 +184,113 @@ class PlotDisplay(Qwt.QwtPlot):
         self.qwtPlot.setCanvasBackground(QtCore.Qt.white)
 
         #self.qwtPlot.setAxisTitle(Qwt.QwtPlot.xBottom, u'日期时间')
+        #self.qwtPlot.setAxisScale(Qwt.QwtPlot.xBottom, 0, 60)
         date_time = QtCore.QDateTime.currentDateTime()
         self.qwtPlot.setAxisScaleDraw(
             Qwt.QwtPlot.xBottom, TimeScaleDraw(date_time))
-        #self.qwtPlot.setAxisScale(Qwt.QwtPlot.xBottom, 0, HISTORY)
+        self.qwtPlot.setAxisLabelRotation(Qwt.QwtPlot.xBottom, -60.0)
+        self.qwtPlot.setAxisLabelAlignment(
+            Qwt.QwtPlot.xBottom, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.first_update_flag = True
+
+        grid = Qwt.QwtPlotGrid()
+        grid.attach(self.qwtPlot)
+        grid.setPen(QtGui.QPen(QtCore.Qt.black, 0, QtCore.Qt.DotLine))
+
+        #zoomer = Qwt.QwtPlotZoomer(Qwt.QwtPlot.xBottom,
+        #                       Qwt.QwtPlot.yLeft,
+        #                       Qwt.QwtPicker.DragSelection,
+        #                       Qwt.QwtPicker.AlwaysOff,
+        #                       self.qwtPlot.canvas())
+        #zoomer.setRubberBandPen(QtGui.QPen(QtCore.Qt.darkGray))
+
+        curve = Qwt.QwtPlotCurve('Temperature Room')
+        curve.setPen(QtGui.QPen(QtCore.Qt.red))
+        curve.attach(self.qwtPlot)
+        self.curves[TROOM] = curve
+        self.data[TROOM] = []
+
+        curve = Qwt.QwtPlotCurve('Humidity')
+        curve.setPen(QtGui.QPen(QtCore.Qt.darkGreen))
+        curve.attach(self.qwtPlot)
+        self.curves[HUMIDITY] = curve
+        self.data[HUMIDITY] = []
+
+        curve = Qwt.QwtPlotCurve('Temperature Water')
+        curve.setPen(QtGui.QPen(QtCore.Qt.blue))
+        curve.attach(self.qwtPlot)
+        self.curves[TWATER] = curve
+        self.data[TWATER] = []
+
+    def update_plot(self, sensor_data):
+        if self.first_update_flag:
+            date_time = QtCore.QDateTime.currentDateTime()
+            self.qwtPlot.setAxisScaleDraw(
+                Qwt.QwtPlot.xBottom, TimeScaleDraw(date_time))
+            self.qwtPlot.setAxisLabelRotation(Qwt.QwtPlot.xBottom, -60.0)
+            self.qwtPlot.setAxisLabelAlignment(
+                Qwt.QwtPlot.xBottom, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+            self.first_update_flag = False
+
+        if self.time_limit == ALL_TIME or self.time_limit > len(self.time_data):
+            self.current_msec = QtCore.QDateTime.currentMSecsSinceEpoch()
+            time = (self.current_msec - self.base_msec) / 1000
+
+            for key in self.data.keys():
+                self.data[key].append(sensor_data[key])
+            self.time_data.append(time)
+            print self.base_msec
+            print time
+            print self.time_data
+        else:
+            for i in xrange(0, self.time_limit):
+                self.time_data[i] += 1
+            for key in self.data.keys():
+                self.data[key][0:-1] = self.data[key][1:]
+                self.data[key][-1] = sensor_data[key]
+
+        self.setAxisScale(
+                Qwt.QwtPlot.xBottom, self.time_data[0], self.time_data[-1])
+        for key in self.curves.keys():
+            self.curves[key].setData(self.time_data, self.data[key])
+        self.qwtPlot.replot()
+
+    # 根据选择的时限，重绘曲线。
+    def redraw_plot(self, time_sec_limit):
+        if time_sec_limit == ALL_TIME:
+            self.time_limit = time_sec_limit
+            return
+        elif time_sec_limit > len(self.time_data):
+            return
+        self.time_limit = time_sec_limit
+        # 由于1s打一个点，因此可以取最后time_limit个元素组成新的列表。
+        for key in self.curves.keys():
+            self.curves[key].setData([], [])
+        self.qwtPlot.replot()    # 先clean
+
+        date_time = QtCore.QDateTime.currentDateTime()
+        new_time = date_time.addSecs(-time_sec_limit)
+        self.qwtPlot.setAxisScaleDraw(
+            Qwt.QwtPlot.xBottom, TimeScaleDraw(new_time))
         self.qwtPlot.setAxisLabelRotation(Qwt.QwtPlot.xBottom, -60.0)
         self.qwtPlot.setAxisLabelAlignment(
             Qwt.QwtPlot.xBottom, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
 
-        self.x = []
-        self.yt = []
-        self.yh = []
-        self.ytw = []
-        self.curvet = Qwt.QwtPlotCurve("Data Moving Temprature Room")
-        self.curvet.attach(self.qwtPlot)
-        self.curvet.setPen(QtGui.QPen(QtCore.Qt.red))
-        self.curveh = Qwt.QwtPlotCurve("Data Moving Humidity")
-        self.curveh.attach(self.qwtPlot)
-        self.curveh.setPen(QtGui.QPen(QtCore.Qt.darkGreen))
-        self.curvetw = Qwt.QwtPlotCurve("Data Moving Temprature Water")
-        self.curvetw.attach(self.qwtPlot)
-        self.curvetw.setPen(QtGui.QPen(QtCore.Qt.blue))
+        self.time_data = range(0, time_sec_limit)
+        self.data[TROOM] = self.data[TROOM][-time_sec_limit:]
+        self.data[TWATER] = self.data[TWATER][-time_sec_limit:]
+        self.data[HUMIDITY] = self.data[HUMIDITY][-time_sec_limit:]
 
-    def update_plot(self, temp_room, hum, temp_water):
-        self.current_sec = QtCore.QDateTime.currentMSecsSinceEpoch()
-        time = (self.current_sec - self.base_sec) / 1000.0
-        self.x.append(time)
-        self.yt.append(float(temp_room))
-        self.yh.append(float(hum))
-        self.ytw.append(float(temp_water))
-
-        self.curvet.setData(self.x, self.yt)
-        self.curveh.setData(self.x, self.yh)
-        self.curvetw.setData(self.x, self.ytw)
-
+        for key in self.curves.keys():
+            self.curves[key].setData(self.time_data, self.data[key])
         self.qwtPlot.replot()
 
     def clean_plot(self):
-        self.curvet.setData([], [])
-        self.curveh.setData([], [])
-        self.curvetw.setData([], [])
+        for key in self.curves.keys():
+            self.curves[key].setData([], [])
         self.qwtPlot.replot()
+        self.base_msec = 0
+        self.first_update_flag = True
         #print 'PlotDisplay.clean_plot()'
 # class PlotDisplay
 
@@ -253,6 +310,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         QtCore.QObject.connect(self.pushButton_save, QtCore.SIGNAL(_fromUtf8("clicked()")), self.save_config)
         QtCore.QObject.connect(self.menu_save_config, QtCore.SIGNAL(_fromUtf8("triggered()")), self.save_config)
         QtCore.QObject.connect(self.table_plot_node, QtCore.SIGNAL(_fromUtf8("itemClicked(QTableWidgetItem*)")), self.refresh_plot)
+        QtCore.QObject.connect(self.combo_plot_range, QtCore.SIGNAL(_fromUtf8("activated(int)")), self.redraw_plot)
 
         #self.listTableView.setModel(self.item_model)
         self.table_node_info.horizontalHeader().setDefaultSectionSize(90)
@@ -282,11 +340,13 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         self.selected_plot_row = -1
         self.selected_plot_text = ''
 
-        timer = QtCore.QTimer(self)
-        timer.timeout.connect(self.show_time)
-        timer.start(1000)
+        self.show_clock_time()
+        clock_timer = QtCore.QTimer(self)
+        clock_timer.timeout.connect(self.show_clock_time)
+        clock_timer.start(1000)
 
-        self.show_time()
+        self.plot_timer = QtCore.QTimer(self)
+        self.plot_timer.timeout.connect(self.plot_timer_event)
 
         # define serial port
         self.serial = serial.Serial()
@@ -308,26 +368,54 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         self.xbee_thread.wait()   # must call wait() to quit the xbee thread.
         print 'FastPlantingFrame del.'
 
+    def redraw_plot(self, selected_index):
+        self.plot_timer.stop()
+        time_limit = 0
+        if selected_index == 0:
+            time_limit = ALL_TIME
+        elif selected_index == 1:
+            time_limit = ONE_MINUTE
+        elif selected_index == 2:
+            time_limit = THIRTY_MINUTES
+        elif selected_index == 3:
+            time_limit = ONE_HOUR
+        elif selected_index == 4:
+            time_limit = SIX_HOURS
+        elif selected_index == 5:
+            time_limit = ONE_DAY
+        elif selected_index == 6:
+            time_limit = SEVEN_DAYS
+        elif selected_index == 7:
+            time_limit = ONE_MONTH
+        else:
+            pass
+        self.qwt_plot.redraw_plot(time_limit)
+        self.plot_timer.start(DELAY_TIME)
+
     # 用户点击节点条目，触发此函数进行对应条目的数据显示。
     def refresh_plot(self, selected_item):
         new_selected_row = selected_item.row()
         if new_selected_row != self.selected_plot_row:
             self.selected_plot_row = new_selected_row
             self.selected_plot_text = selected_item.text()
-            self.startTimer(1000)    # 延时不需太短，5~10s为宜, 注意此timer在多次启动后能否自动回收, 待测试。
+            self.plot_timer.start(DELAY_TIME)    # 延时不需太短，5~10s为宜, 注意此timer在多次启动后能否自动回收, 待测试。
             print 'start plot timer.'
         else:
             print 'already selected ' + str(new_selected_row)
 
     # For the QwtPlot display
-    def timerEvent(self, e):
+    def plot_timer_event(self):
         # 此处可以载入从数据库读出的历史数据，以列表形式传递给 self.qwt_plot.update_plot 进行刷新。
         # 然后再往下执行，进行当前数据更新。
         if self.table_node_info.rowCount() > 0:
+            sensor_data = {}
             item = self.table_node_info.item(self.selected_plot_row, 0)
             if item.text() != self.selected_plot_text:   # 选中节点不存在，则清除plot,并返回.
-                print 'should clean ' + self.selected_plot_text
+                print 'plot_timer_event - clean ' + self.selected_plot_text
                 self.qwt_plot.clean_plot()
+                self.selected_plot_row = -1
+                self.selected_plot_text = ''
+                self.plot_timer.stop()
                 return
             item = self.table_node_info.item(self.selected_plot_row, 2)  # 室内温度
             temp_room = float(item.text())
@@ -335,14 +423,22 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
             humidity = float(item.text())
             item = self.table_node_info.item(self.selected_plot_row, 4)  # 水温
             temp_water = float(item.text())
-            if self.qwt_plot.base_sec == 0:
-                self.qwt_plot.base_sec = QtCore.QDateTime.currentMSecsSinceEpoch()
-            self.qwt_plot.update_plot(temp_room, humidity, temp_water)
+            if self.qwt_plot.base_msec == 0:
+                self.qwt_plot.base_msec = QtCore.QDateTime.currentMSecsSinceEpoch()
+            sensor_data[TROOM] = float(temp_room)
+            sensor_data[HUMIDITY] = float(humidity)
+            sensor_data[TWATER] = float(temp_water)
+            self.qwt_plot.update_plot(sensor_data)
+
         elif self.table_node_info.rowCount() <= 0:  # 列表空，则清除plot
+            print 'plot_timer_event - clean ' + self.selected_plot_text
             self.qwt_plot.clean_plot()
+            self.selected_plot_row = -1
+            self.selected_plot_text = ''
+            self.plot_timer.stop()
     # For the QwtPlot display
 
-    def show_time(self):
+    def show_clock_time(self):
         time = QtCore.QTime.currentTime()
         text = time.toString('hh:mm:ss')
         self.lcdNumber_time.display(text)

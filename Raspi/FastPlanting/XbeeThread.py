@@ -8,7 +8,7 @@ from database import RecordDb
 import threading
 import copy
 
-TIMER_DELAY = 5
+MONITOR_TIMER_DELAY = 3
 
 class XbeeThread(QtCore.QThread):
     def __init__(self,  myserial, myxbee, mainwindow):
@@ -21,7 +21,7 @@ class XbeeThread(QtCore.QThread):
         self.listrow = 0
         self.addr_dict_current = {}
         self.addr_dict_last = {}
-        self.timer = threading.Timer(TIMER_DELAY, self.timer_func_refresh_table)
+        self.timer = threading.Timer(MONITOR_TIMER_DELAY, self.timer_func_refresh_table)
         print 'XbeeThread init.'
 
     def __del__(self):
@@ -50,7 +50,7 @@ class XbeeThread(QtCore.QThread):
                 for item in self.ui_mainwindow.table_plot_node.findItems(key, QtCore.Qt.MatchFixedString):
                     self.ui_mainwindow.table_plot_node.removeRow(item.row())
         self.addr_dict_last = copy.deepcopy(self.addr_dict_current)
-        self.timer = threading.Timer(TIMER_DELAY, self.timer_func_refresh_table)
+        self.timer = threading.Timer(MONITOR_TIMER_DELAY, self.timer_func_refresh_table)
         self.timer.start()
 
     def update_database(self, addr_long, data, database):

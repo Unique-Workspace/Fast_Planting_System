@@ -197,13 +197,53 @@
                 <number>0</number>
                </property>
               </widget>
-              <widget class="QComboBox" name="combo_show_range">
+              <widget class="QComboBox" name="combo_plot_range">
                <property name="maximumSize">
                 <size>
                  <width>16777215</width>
                  <height>40</height>
                 </size>
                </property>
+               <item>
+                <property name="text">
+                 <string>全部</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>最近1分钟</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>最近30分钟</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>最近1小时</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>最近6小时</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>最近1天</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>最近1周</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>最近30天</string>
+                </property>
+               </item>
               </widget>
              </widget>
              <widget class="QwtPlot" name="qwtPlot"/>
