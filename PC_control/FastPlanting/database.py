@@ -151,10 +151,10 @@ class RecordDb(SlaveNode):
         self.sync = 0
         self.mutex.unlock()
 
-
+"""
 myMO = RecordDb()
 myMO.do_read("0013a20040b4103b")
-"""
+
 myNode = SlaveNode()
 myNode.node_id =4
 myNode.node_time = "1128.0"
