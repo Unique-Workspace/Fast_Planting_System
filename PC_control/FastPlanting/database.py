@@ -100,6 +100,29 @@ class RecordDb(SlaveNode):
         sql_str = "INSERT INTO" + " " + self.table + " " + "VALUES" + " " + sql_str
         return sql_str
 
+    def sql_find_NodeId(self,node_id=""):
+        sql_str = "SELECT * FROM " + self.table + " WHERE node_id='" + node_id + "'"
+        return sql_str
+
+    def Node_data_read(self,node_id=""):
+        if node_id == "":
+            print("Node_Id is NULL")
+            return 0
+        sql_str = self.sql_find_NodeId(node_id)
+        self.cursor.execute(sql_str)
+        ret_dict = self.cursor.fetchall()
+        return ret_dict
+
+
+    def do_read(self, node_id=""):
+        if node_id == "":
+            print("Node_Id is NULL")
+            return 0
+        ret_dict = self.Node_data_read(node_id)
+        return ret_dict
+
+
+
     #write the whole node into Mo
     def data_write(self, input_dict):
         if not input_dict.__len__():
@@ -128,8 +151,10 @@ class RecordDb(SlaveNode):
         self.sync = 0
         self.mutex.unlock()
 
+
+myMO = RecordDb()
+myMO.do_read("0013a20040b4103b")
 """
-myMO = MoDb()
 myNode = SlaveNode()
 myNode.node_id =4
 myNode.node_time = "1128.0"
