@@ -286,8 +286,13 @@ class PlotDisplay(Qwt.QwtPlot):
         self.qwtPlot.replot()
 
     def clean_plot(self):
+        # 清空所有本地数据
+        for key in self.data.keys():
+            self.data[key] = []
+        self.time_data = []
         for key in self.curves.keys():
-            self.curves[key].setData([], [])
+            self.curves[key].setData(self.time_data, self.data[key])
+
         self.qwtPlot.replot()
         self.base_msec = 0
         self.first_update_flag = True
@@ -368,6 +373,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         self.xbee_thread.wait()   # must call wait() to quit the xbee thread.
         print 'FastPlantingFrame del.'
 
+    # 每一次重置显示范围，都要从数据库中读取对应数据，进行解析，不要使用PlotDisplay类中的本地数据。
     def redraw_plot(self, selected_index):
         self.plot_timer.stop()
         time_limit = 0
@@ -392,7 +398,8 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         self.qwt_plot.redraw_plot(time_limit)
         self.plot_timer.start(DELAY_TIME)
 
-    # 用户点击节点条目，触发此函数进行对应条目的数据显示。
+    # 用户点击节点地址条目，触发此函数进行对应条目的数据显示。
+    # 应当从数据库中读取数据进行显示。
     def refresh_plot(self, selected_item):
         new_selected_row = selected_item.row()
         if new_selected_row != self.selected_plot_row:
@@ -405,8 +412,8 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
 
     # For the QwtPlot display
     def plot_timer_event(self):
-        # 此处可以载入从数据库读出的历史数据，以列表形式传递给 self.qwt_plot.update_plot 进行刷新。
-        # 然后再往下执行，进行当前数据更新。
+        # 此处应该载入从数据库读出的历史数据，以列表形式传递给 self.qwt_plot.update_plot 进行刷新。
+        # 然后再往下执行，加上当前数据更新。
         if self.table_node_info.rowCount() > 0:
             sensor_data = {}
             item = self.table_node_info.item(self.selected_plot_row, 0)
