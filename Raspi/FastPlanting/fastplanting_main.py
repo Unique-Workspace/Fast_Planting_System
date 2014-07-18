@@ -150,6 +150,33 @@ SEVEN_DAYS = (7*ONE_DAY)
 ONE_MONTH = (30*ONE_DAY)
 ALL_TIME = 0
 
+
+class Background(Qwt.QwtPlotItem):
+
+    def __init__(self):
+        Qwt.QwtPlotItem.__init__(self)
+        self.setZ(0.0)
+
+    # __init__()
+
+    def rtti(self):
+        return Qwt.QwtPlotItem.Rtti_PlotUserItem
+
+    # rtti()
+
+    def draw(self, painter, xMap, yMap, rect):
+        c = QtGui.QColor(QtCore.Qt.white)
+        r = QtCore.QRect(rect)
+
+        for i in range(100, 0, -10):
+            r.setBottom(yMap.transform(i - 10))
+            r.setTop(yMap.transform(i))
+            painter.fillRect(r, c)
+            c = c.dark(110)
+    # draw()
+#  class Background
+
+
 # 曲线显示类
 class PlotDisplay(Qwt.QwtPlot):
     def __init__(self, qwt_plot):
@@ -176,7 +203,7 @@ class PlotDisplay(Qwt.QwtPlot):
         text.setFont(QtGui.QFont(font, 12, QtGui.QFont.Bold))
         self.qwtPlot.setAxisTitle(Qwt.QwtPlot.yLeft, text)
         text = Qwt.QwtText(u'湿度 [\u00b0]')
-        text.setColor(QtCore.Qt.darkGreen)
+        text.setColor(QtCore.Qt.green)
         text.setFont(QtGui.QFont(font, 12, QtGui.QFont.Bold))
         self.qwtPlot.setAxisTitle(Qwt.QwtPlot.yRight, text)
         self.qwtPlot.setAxisScale(Qwt.QwtPlot.yLeft, 0, 100)
@@ -211,7 +238,7 @@ class PlotDisplay(Qwt.QwtPlot):
         self.data[TROOM] = []
 
         curve = Qwt.QwtPlotCurve('Humidity')
-        curve.setPen(QtGui.QPen(QtCore.Qt.darkGreen))
+        curve.setPen(QtGui.QPen(QtCore.Qt.green))
         curve.attach(self.qwtPlot)
         self.curves[HUMIDITY] = curve
         self.data[HUMIDITY] = []
@@ -221,6 +248,11 @@ class PlotDisplay(Qwt.QwtPlot):
         curve.attach(self.qwtPlot)
         self.curves[TWATER] = curve
         self.data[TWATER] = []
+
+        self.qwtPlot.setAutoReplot(False)
+        self.qwtPlot.plotLayout().setAlignCanvasToScales(True)
+        background = Background()
+        background.attach(self.qwtPlot)
 
     def update_plot(self, sensor_data):
         if self.first_update_flag:
@@ -234,7 +266,7 @@ class PlotDisplay(Qwt.QwtPlot):
 
         if self.time_limit == ALL_TIME or self.time_limit > len(self.time_data):
             self.current_msec = QtCore.QDateTime.currentMSecsSinceEpoch()
-            time = (self.current_msec - self.base_msec) / 1000
+            time = (self.current_msec - self.base_msec) / 1000.0
 
             for key in self.data.keys():
                 self.data[key].append(sensor_data[key])
@@ -261,26 +293,27 @@ class PlotDisplay(Qwt.QwtPlot):
             self.time_limit = time_sec_limit
             return
         elif time_sec_limit > len(self.time_data):
+            self.time_limit = time_sec_limit - 1
             return
-        self.time_limit = time_sec_limit
+        self.time_limit = time_sec_limit - 1
         # 由于1s打一个点，因此可以取最后time_limit个元素组成新的列表。
         for key in self.curves.keys():
             self.curves[key].setData([], [])
         self.qwtPlot.replot()    # 先clean
 
         date_time = QtCore.QDateTime.currentDateTime()
-        new_time = date_time.addSecs(-time_sec_limit)
+        new_time = date_time.addSecs(-self.time_limit)
+
         self.qwtPlot.setAxisScaleDraw(
             Qwt.QwtPlot.xBottom, TimeScaleDraw(new_time))
         self.qwtPlot.setAxisLabelRotation(Qwt.QwtPlot.xBottom, -60.0)
         self.qwtPlot.setAxisLabelAlignment(
             Qwt.QwtPlot.xBottom, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
 
-        self.time_data = range(0, time_sec_limit)
-        self.data[TROOM] = self.data[TROOM][-time_sec_limit:]
-        self.data[TWATER] = self.data[TWATER][-time_sec_limit:]
-        self.data[HUMIDITY] = self.data[HUMIDITY][-time_sec_limit:]
-
+        self.time_data = range(0, self.time_limit)
+        self.data[TROOM] = self.data[TROOM][-self.time_limit:]
+        self.data[TWATER] = self.data[TWATER][-self.time_limit:]
+        self.data[HUMIDITY] = self.data[HUMIDITY][-self.time_limit:]
         for key in self.curves.keys():
             self.curves[key].setData(self.time_data, self.data[key])
         self.qwtPlot.replot()
