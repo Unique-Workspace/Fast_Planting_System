@@ -206,11 +206,6 @@
                </property>
                <item>
                 <property name="text">
-                 <string>全部</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
                  <string>最近1分钟</string>
                 </property>
                </item>
@@ -242,6 +237,11 @@
                <item>
                 <property name="text">
                  <string>最近30天</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>全部</string>
                 </property>
                </item>
               </widget>

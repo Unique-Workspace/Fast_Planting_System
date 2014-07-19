@@ -2,6 +2,7 @@ import sqlite3
 import mutex
 #test
 
+
 class SlaveNode:
     def __init__(self):
         self.node_dict = {'node_id': {"value": "0", "type": "TEXT", "property": "NOT NULL"},
@@ -100,42 +101,45 @@ class RecordDb(SlaveNode):
         sql_str = "INSERT INTO" + " " + self.table + " " + "VALUES" + " " + sql_str
         return sql_str
 
-    def sql_find_NodeId(self,node_id=""):
+    def sql_find_node_id(self, node_id=""):
         sql_str = "SELECT * FROM " + self.table + " WHERE node_id='" + node_id + "'"
         return sql_str
 
-    def sql_find_cavedata(self,node_id=""):
-        sql_str = "SELECT node_time,node_temp,node_humi,node_watertemp FROM " + self.table + " WHERE node_id='" + node_id + "'"
+    def sql_find_cavedata(self, node_id="", start_time="", end_time=""):
+        if start_time != "" and end_time != "" and start_time < end_time:
+            sql_str = "SELECT node_time,node_temp,node_humi,node_watertemp FROM " + self.table + " WHERE node_id='" + \
+                      node_id + "'" + " AND node_time BETWEEN " + "'" + start_time + "'" + " AND " + "'" + end_time + "'"
+        else:
+            sql_str = "SELECT node_time,node_temp,node_humi,node_watertemp FROM " + self.table + " WHERE node_id='" + node_id + "'"
         return sql_str
 
-    def Node_data_read(self,node_id=""):
+    def node_data_read(self, node_id=""):
         if node_id == "":
             print("Node_Id is NULL")
             return 0
-        sql_str = self.sql_find_NodeId(node_id)
+        sql_str = self.sql_find_node_id(node_id)
         self.cursor.execute(sql_str)
         ret_dict = self.cursor.fetchall()
         return ret_dict
-
 
     def do_read(self, node_id=""):
         if node_id == "":
             print("Node_Id is NULL")
             return 0
-        ret_dict = self.Node_data_read(node_id)
+        ret_dict = self.node_data_read(node_id)
         return ret_dict
 
-    def curvedataread(self,node_id=""):
+    def curve_data_read(self, node_id="", start_time="", end_time=""):
         if node_id == "":
             print("Node_Id is NULL")
             return 0
-        sql_str = self.sql_find_cavedata(node_id)
+        if start_time != "" and end_time != "" and start_time < end_time:
+            sql_str = self.sql_find_cavedata(node_id, start_time, end_time)
+        else:
+            sql_str = self.sql_find_cavedata(node_id)
         self.cursor.execute(sql_str)
-        ret_dict = self.cursor.fetchall()
-        return ret_dict
-
-
-
+        data = self.cursor.fetchall()
+        return sorted(data, key=lambda data : data[0])   # sort by time
 
     #write the whole node into Mo
     def data_write(self, input_dict):
@@ -166,9 +170,16 @@ class RecordDb(SlaveNode):
         self.mutex.unlock()
 
 
-myMO = RecordDb()
-myMO.curvedataread("0013a20040b4103b")
 """
+myMO = RecordDb()
+data = myMO.curve_data_read("0013a20040b4103b")
+print data[0][0], data[0][1], data[0][2], data[0][3]
+
+start = '2014-06-07 12:17:43'
+end = '2014-06-07 12:18:05'
+data = myMO.curve_data_read("0013a20040b4103b", start, end)
+print data
+
 myNode = SlaveNode()
 myNode.node_id =4
 myNode.node_time = "1128.0"

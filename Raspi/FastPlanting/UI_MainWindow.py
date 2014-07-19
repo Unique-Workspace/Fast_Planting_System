@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'UI_MainWindow.ui'
 #
-# Created: Tue Jul 15 21:14:30 2014
+# Created: Sat Jul 19 20:31:52 2014
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -230,14 +230,14 @@ class Ui_MainWindow(object):
         self.button_open_serial.setText(_translate("MainWindow", "连接", None))
         self.tab_display.setTabText(self.tab_display.indexOf(self.tab), _translate("MainWindow", "显示", None))
         self.groupBox_3.setTitle(_translate("MainWindow", "温湿度显示", None))
-        self.combo_plot_range.setItemText(0, _translate("MainWindow", "全部", None))
-        self.combo_plot_range.setItemText(1, _translate("MainWindow", "最近1分钟", None))
-        self.combo_plot_range.setItemText(2, _translate("MainWindow", "最近30分钟", None))
-        self.combo_plot_range.setItemText(3, _translate("MainWindow", "最近1小时", None))
-        self.combo_plot_range.setItemText(4, _translate("MainWindow", "最近6小时", None))
-        self.combo_plot_range.setItemText(5, _translate("MainWindow", "最近1天", None))
-        self.combo_plot_range.setItemText(6, _translate("MainWindow", "最近1周", None))
-        self.combo_plot_range.setItemText(7, _translate("MainWindow", "最近30天", None))
+        self.combo_plot_range.setItemText(0, _translate("MainWindow", "最近1分钟", None))
+        self.combo_plot_range.setItemText(1, _translate("MainWindow", "最近30分钟", None))
+        self.combo_plot_range.setItemText(2, _translate("MainWindow", "最近1小时", None))
+        self.combo_plot_range.setItemText(3, _translate("MainWindow", "最近6小时", None))
+        self.combo_plot_range.setItemText(4, _translate("MainWindow", "最近1天", None))
+        self.combo_plot_range.setItemText(5, _translate("MainWindow", "最近1周", None))
+        self.combo_plot_range.setItemText(6, _translate("MainWindow", "最近30天", None))
+        self.combo_plot_range.setItemText(7, _translate("MainWindow", "全部", None))
         self.tab_display.setTabText(self.tab_display.indexOf(self.tab_fig), _translate("MainWindow", "曲线图", None))
         self.groupBox_2.setTitle(_translate("MainWindow", "范围显示", None))
         self.label_3.setText(_translate("MainWindow", "信息显示：", None))
