@@ -1,7 +1,8 @@
 # setup.py
 
 from distutils.core import setup
+import numpy
 import py2exe
 
-options = {"py2exe": {"packages": ['wx.lib.pubsub']}}
-setup(windows=[{'script': 'FastPlantingMain.py'}],options=options)
+option={"py2exe":{"includes":["sip", "numpy"]}}
+setup(windows=[{"script":"fastplanting_main.py"}], options=option)

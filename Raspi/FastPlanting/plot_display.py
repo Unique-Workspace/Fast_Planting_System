@@ -3,7 +3,6 @@
 
 from PyQt4 import QtCore, QtGui
 import PyQt4.Qwt5 as Qwt
-import PyQt4.Qwt5.anynumpy as np
 from database import RecordDb
 
 TROOM = 'TRoom'
