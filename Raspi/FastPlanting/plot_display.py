@@ -10,7 +10,7 @@ TROOM = 'TRoom'
 TWATER = 'Twater'
 HUMIDITY = 'Humidity'
 
-ONE_MINUTE = 10  # test
+ONE_MINUTE = 60  # test
 TEN_MINUTES = (10*ONE_MINUTE)
 THIRTY_MINUTES = (30*ONE_MINUTE)
 ONE_HOUR = (60*ONE_MINUTE)
@@ -157,16 +157,13 @@ class PlotDisplay(Qwt.QwtPlot):
                 Qwt.QwtPlot.xBottom, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
             self.first_update_flag = False
 
-        if self.time_limit == ALL_TIME_STATIC or self.time_limit > len(self.time_data):
+        if self.time_limit > len(self.time_data):
             self.current_msec = QtCore.QDateTime.currentMSecsSinceEpoch()
-            time = (self.current_msec - self.base_msec) / 1000.0
+            time = (self.current_msec - self.base_msec) / 1000
 
             for key in self.curve_data.keys():
                 self.curve_data[key].append(sensor_data[key])
             self.time_data.append(time)
-            #print self.base_msec
-            #print time
-            #print self.time_data
         else:
             for i in xrange(0, self.time_limit):
                 self.time_data[i] += 1
@@ -174,6 +171,8 @@ class PlotDisplay(Qwt.QwtPlot):
                 self.curve_data[key][0:-1] = self.curve_data[key][1:]
                 self.curve_data[key][-1] = sensor_data[key]
 
+        #print len(self.time_data), self.time_data[0], self.time_data[-1]
+        #print self.time_data
         self.setAxisScale(
                 Qwt.QwtPlot.xBottom, self.time_data[0], self.time_data[-1])
         for key in self.curves.keys():
@@ -208,24 +207,26 @@ class PlotDisplay(Qwt.QwtPlot):
         database.do_close()
         self.start_time = QtCore.QDateTime.fromString(times[0], 'yyyy-MM-dd hh:mm:ss')  # start time for static display.
         start_sec = self.start_time.toMSecsSinceEpoch() / 1000.0
+        if self.base_msec == 0:
+                self.base_msec = self.start_time.toMSecsSinceEpoch()
         for time in times:
             time = QtCore.QDateTime.fromString(time, 'yyyy-MM-dd hh:mm:ss')
             current_sec = time.toMSecsSinceEpoch() / 1000.0
             current_sec -= start_sec
             self.time_data.append(current_sec)
-        #print times[0], times[-1]
+        #print len(self.time_data), self.time_data
         #print self.time_data[0], self.time_data[-1], len(self.time_data)
         #print (self.time_data[-1] - self.time_data[0]) / 3600/24
 
-    # 绘制静态图表
-    def draw_all_static_plot(self):
-        self.read_node_db_info(ALL_TIME_STATIC)
-        #base_time = self.start_time.addSecs(self.time_data[0] - self.time_data[-1])
+    # 绘制time_limit时限的静态图表
+    def draw_time_limit_plot(self, time_limit):
+        self.read_node_db_info(time_limit)
         self.qwtPlot.setAxisScaleDraw(
                 Qwt.QwtPlot.xBottom, TimeScaleDraw(self.start_time))
         self.qwtPlot.setAxisLabelRotation(Qwt.QwtPlot.xBottom, -60.0)
         self.qwtPlot.setAxisLabelAlignment(
             Qwt.QwtPlot.xBottom, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+        self.first_update_flag = False
         self.setAxisScale(
                 Qwt.QwtPlot.xBottom, self.time_data[0], self.time_data[-1])
         for key in self.curves.keys():
@@ -234,35 +235,13 @@ class PlotDisplay(Qwt.QwtPlot):
 
     # 根据选择的时限，重绘曲线。
     def redraw_plot(self, time_sec_limit):
-        if time_sec_limit == ALL_TIME_STATIC:
-            self.time_limit = time_sec_limit
-            self.draw_all_static_plot()
-            return
-        elif time_sec_limit > len(self.time_data):
-            self.time_limit = time_sec_limit - 1
-            return
-        self.time_limit = time_sec_limit - 1
-        # 由于1s打一个点，因此可以取最后time_limit个元素组成新的列表。
-        for key in self.curves.keys():
-            self.curves[key].setData([], [])
-        self.qwtPlot.replot()    # 先clean
-
-        date_time = QtCore.QDateTime.currentDateTime()
-        new_time = date_time.addSecs(-self.time_limit)
-
-        self.qwtPlot.setAxisScaleDraw(
-            Qwt.QwtPlot.xBottom, TimeScaleDraw(new_time))
-        self.qwtPlot.setAxisLabelRotation(Qwt.QwtPlot.xBottom, -60.0)
-        self.qwtPlot.setAxisLabelAlignment(
-            Qwt.QwtPlot.xBottom, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
-
-        self.time_data = range(0, self.time_limit)
-        self.curve_data[TROOM] = self.curve_data[TROOM][-self.time_limit:]
-        self.curve_data[TWATER] = self.curve_data[TWATER][-self.time_limit:]
-        self.curve_data[HUMIDITY] = self.curve_data[HUMIDITY][-self.time_limit:]
-        for key in self.curves.keys():
-            self.curves[key].setData(self.time_data, self.curve_data[key])
-        self.qwtPlot.replot()
+        # 重绘time_limit期间的曲线：
+        # 1、清空curve_data数据
+        # 2、从数据库读取time_limit期间的数据，并存入curve_data
+        # 3、重绘图表，完成。交给plot_timer_event在此基础上继续刷新。
+        #print time_sec_limit
+        self.time_limit = time_sec_limit
+        self.draw_time_limit_plot(time_sec_limit)
 
     def clean_plot(self):
         # 清空所有本地数据

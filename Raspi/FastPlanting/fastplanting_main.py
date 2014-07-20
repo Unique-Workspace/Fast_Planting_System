@@ -191,8 +191,6 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         self.xbee_thread.wait()   # must call wait() to quit the xbee thread.
         print 'FastPlantingFrame del.'
 
-
-
     # 每一次重置显示范围，都要从数据库中读取对应数据，进行解析，不要使用PlotDisplay类中的本地数据。
     def redraw_plot(self, selected_index):
         self.plot_timer.stop()
