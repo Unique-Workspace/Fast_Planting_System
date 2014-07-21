@@ -123,6 +123,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         super(FastPlantingFrame, self).__init__()
 
         self.setupUi(self)
+        self.showMaximized()
 
         QtCore.QObject.connect(self.button_open_serial, QtCore.SIGNAL(_fromUtf8("clicked()")), self.open_serial)
         QtCore.QObject.connect(self.button_scan, QtCore.SIGNAL(_fromUtf8("clicked()")), self.scan_node)
