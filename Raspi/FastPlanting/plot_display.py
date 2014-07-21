@@ -255,7 +255,8 @@ class PlotDisplay(Qwt.QwtPlot):
         self.first_update_flag = True
         #print 'PlotDisplay.clean_plot()'
 
-    def get_plot_time_limit(self, selected_index):
+    @staticmethod
+    def get_plot_time_limit(selected_index):
         time_limit = 0
         if selected_index == 7:
             time_limit = ALL_TIME_STATIC
