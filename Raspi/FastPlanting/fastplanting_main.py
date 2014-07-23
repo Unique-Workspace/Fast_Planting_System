@@ -31,7 +31,6 @@ BROADCAST_ADDR_LONG = b'\x00\x00\x00\x00\x00\x00\xff\xff'
 BROADCAST_ADDR_SHORT = b'\xff\xfe'
 #R1_ADDR_LONG = b'\x00\x13\xA2\x00\x40\xB4\x10\x3b'
 #R1_ADDR_SHORT = b'\xff\xfe'
-MONITOR_DELAY_TIME = 1000
 
 
 class SpinBoxDelegate(QtGui.QItemDelegate):
@@ -185,6 +184,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         print 'FastPlantingFrame init.'
 
     def __del__(self):
+        print 'FastPlantingFrame del111.'
         self.xbee.halt()
         self.serial.close()
 
@@ -198,7 +198,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         time_limit = PlotDisplay.get_plot_time_limit(selected_index)
         self.qwt_plot.redraw_plot(time_limit)
         if time_limit != plot_display.ALL_TIME_STATIC:
-            self.plot_timer.start(MONITOR_DELAY_TIME)
+            self.plot_timer.start(plot_display.MONITOR_DELAY_TIME)
 
     # 用户点击节点地址条目，触发此函数进行对应条目的数据显示。
     # 应当从数据库中读取数据进行显示。
@@ -210,7 +210,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
             self.qwt_plot.selected_plot_node = self.selected_plot_node  # 保持选中节点同步
             time_limit = PlotDisplay.get_plot_time_limit(self.combo_plot_range.currentIndex())
             if time_limit != plot_display.ALL_TIME_STATIC:  # 判断是否为静态显示。
-                self.plot_timer.start(MONITOR_DELAY_TIME)    # 延时不需太短，5~10s为宜, 注意此timer在多次启动后能否自动回收, 待测试。
+                self.plot_timer.start(plot_display.MONITOR_DELAY_TIME)    # 延时不需太短，5~10s为宜, 注意此timer在多次启动后能否自动回收, 待测试。
                 print 'start plot timer.'
             else:
                 self.qwt_plot.redraw_plot(time_limit)   # 进行静态显示。

@@ -8,7 +8,7 @@ from database import RecordDb
 import threading
 import copy
 
-MONITOR_TIMER_DELAY = 3
+MONITOR_TIMER_DELAY = 3000
 
 class XbeeThread(QtCore.QThread):
     def __init__(self,  myserial, myxbee, mainwindow):
@@ -21,7 +21,11 @@ class XbeeThread(QtCore.QThread):
         self.listrow = 0
         self.addr_dict_current = {}
         self.addr_dict_last = {}
-        self.timer = threading.Timer(MONITOR_TIMER_DELAY, self.timer_func_refresh_table)
+        self.refresh_table_timer = QtCore.QTimer(self)
+        self.refresh_table_timer.timeout.connect(self.refresh_table_event)
+        self.db_timer = QtCore.QTimer(self)
+        self.db_timer.timeout.connect(self.update_database_event)
+        self.database  = None
         print 'XbeeThread init.'
 
     def __del__(self):
@@ -37,7 +41,7 @@ class XbeeThread(QtCore.QThread):
         else:
             print 'stop do nothing.'
 
-    def timer_func_refresh_table(self):
+    def refresh_table_event(self):
         for key in self.addr_dict_last:
             if self.addr_dict_last[key] == self.addr_dict_current[key]:
                 for item in self.ui_mainwindow.table_node_info.findItems(key, QtCore.Qt.MatchFixedString):
@@ -50,18 +54,27 @@ class XbeeThread(QtCore.QThread):
                 for item in self.ui_mainwindow.table_plot_node.findItems(key, QtCore.Qt.MatchFixedString):
                     self.ui_mainwindow.table_plot_node.removeRow(item.row())
         self.addr_dict_last = copy.deepcopy(self.addr_dict_current)
-        self.timer = threading.Timer(MONITOR_TIMER_DELAY, self.timer_func_refresh_table)
-        self.timer.start()
+        #self.timer = threading.Timer(MONITOR_TIMER_DELAY, self.timer_func_refresh_table)
+        #self.timer.start()
 
-    def update_database(self, addr_long, data, database):
-        dict_data = {}
-        now_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
-        dict_data['node_id'] = str(addr_long)
-        dict_data['node_time'] = now_time
-        dict_data['node_humi'] = data[0]
-        dict_data['node_temp'] = data[1]
-        dict_data['node_watertemp'] = data[2]
-        database.do_write(dict_data)
+    def update_database_event(self):
+        if self.database == None:
+            self.database = RecordDb()
+        current_row = self.ui_mainwindow.table_node_info.rowCount() 
+        if current_row > 0:
+            dict_data = {}
+            for row in xrange(0, current_row):
+                current_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+                dict_data['node_time'] = current_time
+                item = self.ui_mainwindow.table_node_info.item(row, 0)
+                dict_data['node_id'] = str(item.text())
+                item = self.ui_mainwindow.table_node_info.item(row, 2)  # 室内温度
+                dict_data['node_temp']  = float(item.text())
+                item = self.ui_mainwindow.table_node_info.item(row, 3)  # 湿度
+                dict_data['node_humi']  = float(item.text())
+                item = self.ui_mainwindow.table_node_info.item(row, 4)  # 水温
+                dict_data['node_watertemp']  = float(item.text())
+                self.database.do_write(dict_data)
 
     def update_table_nodeinfo(self, data, text):
         #print data, text
@@ -209,7 +222,7 @@ class XbeeThread(QtCore.QThread):
             self.ui_mainwindow.table_plot_node.setRowCount(row + 1)
             self.ui_mainwindow.table_plot_node.setItem(row, 0, item_plot_addr_long)
 
-    def message_received(self, data, database):
+    def message_received(self, data):
         try:
             src_addr_long = data['source_addr_long']
             src_addr_short = data['source_addr']
@@ -218,13 +231,13 @@ class XbeeThread(QtCore.QThread):
             orig_str = data['rf_data']  # dict assign to string
             text = orig_str.split(',')
             self.update_table_nodeinfo((src_addr_long.encode('hex'), src_addr_short.encode('hex')), text)
-            self.update_database(src_addr_long.encode('hex'), text, database)
+            #self.update_database(src_addr_long.encode('hex'), text, database)
         except Exception, e:
             print e
 
     def run(self):
-        database = RecordDb()
-        self.timer.start()
+        self.refresh_table_timer.start(MONITOR_TIMER_DELAY)
+        self.db_timer.start(5000)
         while not self.abort:
             #print 'xbee thread run.'
             try:
@@ -232,7 +245,7 @@ class XbeeThread(QtCore.QThread):
 
                     data = self.xbee.wait_read_frame()
                     #print data
-                    self.message_received(data, database)
+                    self.message_received(data)
 
                 time.sleep(1)
             except KeyboardInterrupt:

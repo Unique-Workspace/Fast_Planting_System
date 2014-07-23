@@ -21,7 +21,8 @@ THREE_DAYS = (3*ONE_DAY)
 SEVEN_DAYS = (7*ONE_DAY)
 ONE_MONTH = (30*ONE_DAY)
 ALL_TIME_STATIC = 0
-
+MONITOR_DELAY_TIME = 5000
+MONITOR_DELAY_SECOND = (MONITOR_DELAY_TIME/1000)
 
 # 曲线显示时间轴
 class TimeScaleDraw(Qwt.QwtScaleDraw):
@@ -156,7 +157,7 @@ class PlotDisplay(Qwt.QwtPlot):
                 Qwt.QwtPlot.xBottom, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
             self.first_update_flag = False
 
-        if self.time_limit > len(self.time_data):
+        if (self.time_limit/MONITOR_DELAY_SECOND) > len(self.time_data):
             self.current_msec = QtCore.QDateTime.currentMSecsSinceEpoch()
             time = (self.current_msec - self.base_msec) / 1000
 
@@ -164,7 +165,7 @@ class PlotDisplay(Qwt.QwtPlot):
                 self.curve_data[key].append(sensor_data[key])
             self.time_data.append(time)
         else:
-            for i in xrange(0, self.time_limit):
+            for i in xrange(0, len(self.time_data)):
                 self.time_data[i] += 1
             for key in self.curve_data.keys():
                 self.curve_data[key][0:-1] = self.curve_data[key][1:]
