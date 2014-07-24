@@ -96,7 +96,7 @@ class PlotDisplay(Qwt.QwtPlot):
         text.setFont(QtGui.QFont(font, 12, QtGui.QFont.Bold))
         self.qwtPlot.setAxisTitle(Qwt.QwtPlot.yLeft, text)
         text = Qwt.QwtText(u'湿度 [\u00b0]')
-        text.setColor(QtCore.Qt.green)
+        text.setColor(QtCore.Qt.darkGreen)
         text.setFont(QtGui.QFont(font, 12, QtGui.QFont.Bold))
         self.qwtPlot.setAxisTitle(Qwt.QwtPlot.yRight, text)
         self.qwtPlot.setAxisScale(Qwt.QwtPlot.yLeft, 0, 100)
@@ -117,6 +117,15 @@ class PlotDisplay(Qwt.QwtPlot):
         grid.attach(self.qwtPlot)
         grid.setPen(QtGui.QPen(QtCore.Qt.black, 0, QtCore.Qt.DotLine))
 
+        self.picker = Qwt.QwtPlotPicker(
+            Qwt.QwtPlot.xBottom,
+            Qwt.QwtPlot.yLeft,
+            Qwt.QwtPicker.PointSelection | Qwt.QwtPicker.DragSelection,
+            Qwt.QwtPlotPicker.CrossRubberBand,
+            Qwt.QwtPicker.AlwaysOn,
+            self.qwtPlot.canvas())
+        self.picker.setRubberBandPen(QtGui.QPen(QtCore.Qt.yellow))
+        self.picker.setTrackerPen(QtGui.QPen(QtCore.Qt.cyan))
         #zoomer = Qwt.QwtPlotZoomer(Qwt.QwtPlot.xBottom,
         #                       Qwt.QwtPlot.yLeft,
         #                       Qwt.QwtPicker.DragSelection,
@@ -131,7 +140,7 @@ class PlotDisplay(Qwt.QwtPlot):
         self.curve_data[TROOM] = []
 
         curve = Qwt.QwtPlotCurve('Humidity')
-        curve.setPen(QtGui.QPen(QtCore.Qt.green))
+        curve.setPen(QtGui.QPen(QtCore.Qt.darkGreen))
         curve.attach(self.qwtPlot)
         self.curves[HUMIDITY] = curve
         self.curve_data[HUMIDITY] = []
@@ -146,7 +155,37 @@ class PlotDisplay(Qwt.QwtPlot):
         self.qwtPlot.plotLayout().setAlignCanvasToScales(True)
         background = Background()
         background.attach(self.qwtPlot)
+        
+        self.connect(self.picker,
+                     QtCore.SIGNAL('moved(const QPoint &)'),
+                     self.moved)
+        self.connect(self.picker,
+                     QtCore.SIGNAL('selected(const QPolygon &)'),
+                     self.selected)
 
+    def showInfo(self, text=None):
+        if not text:
+            if self.picker.rubberBand():
+                text = 'Cursor Pos: Press left mouse button in plot region'
+            else:
+                text = 'Zoom: Press mouse button and drag'
+                
+    # showInfo()
+    
+    def moved(self, point):
+        info = "Freq=%g, Ampl=%g, Phase=%g" % (
+            self.qwtPlot.invTransform(Qwt.QwtPlot.xBottom, point.x()),
+            self.qwtPlot.invTransform(Qwt.QwtPlot.yLeft, point.y()),
+            self.qwtPlot.invTransform(Qwt.QwtPlot.yRight, point.y()))
+        self.showInfo(info)
+
+    # moved()
+
+    def selected(self, _):
+        self.showInfo()
+
+    # selected()
+    
     def update_plot(self, sensor_data):
         if self.first_update_flag:
             date_time = QtCore.QDateTime.currentDateTime()
@@ -166,7 +205,7 @@ class PlotDisplay(Qwt.QwtPlot):
             self.time_data.append(time)
         else:
             for i in xrange(0, len(self.time_data)):
-                self.time_data[i] += 1
+                self.time_data[i] += MONITOR_DELAY_SECOND
             for key in self.curve_data.keys():
                 self.curve_data[key][0:-1] = self.curve_data[key][1:]
                 self.curve_data[key][-1] = sensor_data[key]
