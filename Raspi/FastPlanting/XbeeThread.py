@@ -8,7 +8,8 @@ from database import RecordDb
 import threading
 import copy
 
-MONITOR_TIMER_DELAY = 3000
+CLEAN_TIMER_DELAY = 3000
+DB_TIMER_DELAY = 5000
 
 class XbeeThread(QtCore.QThread):
     def __init__(self,  myserial, myxbee, mainwindow):
@@ -58,7 +59,7 @@ class XbeeThread(QtCore.QThread):
         #self.timer.start()
 
     def update_database_event(self):
-        if self.database == None:
+        if self.database is None:
             self.database = RecordDb()
         current_row = self.ui_mainwindow.table_node_info.rowCount() 
         if current_row > 0:
@@ -236,8 +237,8 @@ class XbeeThread(QtCore.QThread):
             print e
 
     def run(self):
-        self.refresh_table_timer.start(MONITOR_TIMER_DELAY)
-        self.db_timer.start(5000)
+        self.refresh_table_timer.start(CLEAN_TIMER_DELAY)
+        self.db_timer.start(DB_TIMER_DELAY)
         while not self.abort:
             #print 'xbee thread run.'
             try:

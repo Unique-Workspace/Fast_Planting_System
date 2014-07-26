@@ -16,3 +16,4 @@
 /Raspi/FastPlanting/.idea
 /Raspi/FastPlanting/*.db
 *.pyc
+/Raspi/FastPlanting/*.pyc

@@ -24,6 +24,9 @@ ALL_TIME_STATIC = 0
 MONITOR_DELAY_TIME = 5000
 MONITOR_DELAY_SECOND = (MONITOR_DELAY_TIME/1000)
 
+global_plot_time_base = QtCore.QDateTime.currentDateTime()
+
+
 # 曲线显示时间轴
 class TimeScaleDraw(Qwt.QwtScaleDraw):
 
@@ -66,6 +69,25 @@ class Background(Qwt.QwtPlotItem):
             c = c.dark(110)
     # draw()
 #  class Background
+
+
+# reload class QwtPlotPicker for time scale display.
+class PlotPickerByTime(Qwt.QwtPlotPicker):
+    def __init__(self,  *args):
+        Qwt.QwtPlotPicker.__init__(self, *args)
+
+    def trackerTextF(self, pos):
+        time = self.toDateTime(float(pos.x()))
+        y = '%.2f' % float(pos.y())
+        text = time.toString('MM-dd hh:mm:ss') + ', ' + y
+
+        return Qwt.QwtText(text)
+
+    def toDateTime(self, value):
+        global global_plot_time_base
+        value *= 1000
+        time = global_plot_time_base.addMSecs(value)
+        return time
 
 
 # 曲线显示类
@@ -117,7 +139,7 @@ class PlotDisplay(Qwt.QwtPlot):
         grid.attach(self.qwtPlot)
         grid.setPen(QtGui.QPen(QtCore.Qt.black, 0, QtCore.Qt.DotLine))
 
-        self.picker = Qwt.QwtPlotPicker(
+        self.picker = PlotPickerByTime(
             Qwt.QwtPlot.xBottom,
             Qwt.QwtPlot.yLeft,
             Qwt.QwtPicker.PointSelection | Qwt.QwtPicker.DragSelection,
@@ -164,6 +186,7 @@ class PlotDisplay(Qwt.QwtPlot):
                      self.selected)
 
     def showInfo(self, text=None):
+        print 'plot showInfo'
         if not text:
             if self.picker.rubberBand():
                 text = 'Cursor Pos: Press left mouse button in plot region'
@@ -173,6 +196,7 @@ class PlotDisplay(Qwt.QwtPlot):
     # showInfo()
     
     def moved(self, point):
+        print 'plot moved x=' + str(point.x()) + ' y=' + str(point.y())
         info = "Freq=%g, Ampl=%g, Phase=%g" % (
             self.qwtPlot.invTransform(Qwt.QwtPlot.xBottom, point.x()),
             self.qwtPlot.invTransform(Qwt.QwtPlot.yLeft, point.y()),
@@ -182,6 +206,7 @@ class PlotDisplay(Qwt.QwtPlot):
     # moved()
 
     def selected(self, _):
+        print 'plot selected'
         self.showInfo()
 
     # selected()
@@ -189,6 +214,8 @@ class PlotDisplay(Qwt.QwtPlot):
     def update_plot(self, sensor_data):
         if self.first_update_flag:
             date_time = QtCore.QDateTime.currentDateTime()
+            global global_plot_time_base
+            global_plot_time_base = date_time
             self.qwtPlot.setAxisScaleDraw(
                 Qwt.QwtPlot.xBottom, TimeScaleDraw(date_time))
             self.qwtPlot.setAxisLabelRotation(Qwt.QwtPlot.xBottom, -60.0)
@@ -225,11 +252,23 @@ class PlotDisplay(Qwt.QwtPlot):
         start = end.addSecs(-time_limit)
         time_range['end'] = str(end.toString('yyyy-MM-dd hh:mm:ss'))
         time_range['start'] = str(start.toString('yyyy-MM-dd hh:mm:ss'))
+        global global_plot_time_base
+        global_plot_time_base = start
         return time_range
+
+    # 测试指定时间范围内有没有节点信息
+    def test_node_db_info(self, time_limit):
+        database = RecordDb()
+        if time_limit == ALL_TIME_STATIC:
+            node_data = database.curve_data_read(self.selected_plot_node['text'])
+        else:
+            time_range = self.calculate_time_range(time_limit)
+            node_data = database.curve_data_read(self.selected_plot_node['text'], time_range['start'], time_range['end'])
+        database.do_close()
+        return len(node_data)
 
     # 从数据库读取节点信息，读完关闭
     def read_node_db_info(self, time_limit):
-        self.clean_plot()   # 清除curve_data{}字典
         times = []
         database = RecordDb()
         if time_limit == ALL_TIME_STATIC:
@@ -237,17 +276,20 @@ class PlotDisplay(Qwt.QwtPlot):
         else:
             time_range = self.calculate_time_range(time_limit)
             node_data = database.curve_data_read(self.selected_plot_node['text'], time_range['start'], time_range['end'])
+        database.do_close()
+        self.clean_plot()   # 清除curve_data{}字典
+        if len(node_data) == 0:  # 在指定范围内有数据,才会去更新
+            return -1
         # 时间，温度，湿度，水温
         for data in node_data:
             times.append(data[0])
             self.curve_data[TROOM].append(data[1])
             self.curve_data[HUMIDITY].append(data[2])
             self.curve_data[TWATER].append(data[3])
-        database.do_close()
         self.start_time = QtCore.QDateTime.fromString(times[0], 'yyyy-MM-dd hh:mm:ss')  # start time for static display.
         start_sec = self.start_time.toMSecsSinceEpoch() / 1000.0
         if self.base_msec == 0:
-                self.base_msec = self.start_time.toMSecsSinceEpoch()
+            self.base_msec = self.start_time.toMSecsSinceEpoch()
         for time in times:
             time = QtCore.QDateTime.fromString(time, 'yyyy-MM-dd hh:mm:ss')
             current_sec = time.toMSecsSinceEpoch() / 1000.0
@@ -259,7 +301,10 @@ class PlotDisplay(Qwt.QwtPlot):
 
     # 绘制time_limit时限的静态图表
     def draw_time_limit_plot(self, time_limit):
-        self.read_node_db_info(time_limit)
+        ret = self.read_node_db_info(time_limit)
+        if ret == -1:
+            print 'draw_time_limit_plot() ret -1'
+            return
         self.qwtPlot.setAxisScaleDraw(
                 Qwt.QwtPlot.xBottom, TimeScaleDraw(self.start_time))
         self.qwtPlot.setAxisLabelRotation(Qwt.QwtPlot.xBottom, -60.0)

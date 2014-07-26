@@ -18,7 +18,6 @@ from xbee import ZigBee
 import serial
 import sys
 from config_process import ConfigProcess
-from plot_display import PlotDisplay
 import plot_display
 
 try:
@@ -158,7 +157,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         self.table_plot_node.setHorizontalHeaderLabels((u"物理地址",))
         self.table_plot_node.horizontalHeader().setResizeMode(0, QtGui.QHeaderView.Stretch)
 
-        self.qwt_plot = PlotDisplay(self.qwtPlot, self.combo_plot_range.currentIndex())
+        self.qwt_plot = plot_display.PlotDisplay(self.qwtPlot, self.combo_plot_range.currentIndex())
         self.selected_plot_node = {}
         self.selected_plot_node['row'] = -1    # default value
         self.selected_plot_node['text'] = ''
@@ -195,7 +194,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
     # 每一次重置显示范围，都要从数据库中读取对应数据，进行解析，不要使用PlotDisplay类中的本地数据。
     def redraw_plot(self, selected_index):
         self.plot_timer.stop()
-        time_limit = PlotDisplay.get_plot_time_limit(selected_index)
+        time_limit = plot_display.PlotDisplay.get_plot_time_limit(selected_index)
         self.qwt_plot.redraw_plot(time_limit)
         if time_limit != plot_display.ALL_TIME_STATIC:
             self.plot_timer.start(plot_display.MONITOR_DELAY_TIME)
@@ -208,7 +207,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
             self.selected_plot_node['row'] = new_selected_row
             self.selected_plot_node['text'] = str(selected_item.text())
             self.qwt_plot.selected_plot_node = self.selected_plot_node  # 保持选中节点同步
-            time_limit = PlotDisplay.get_plot_time_limit(self.combo_plot_range.currentIndex())
+            time_limit = plot_display.PlotDisplay.get_plot_time_limit(self.combo_plot_range.currentIndex())
             if time_limit != plot_display.ALL_TIME_STATIC:  # 判断是否为静态显示。
                 self.plot_timer.start(plot_display.MONITOR_DELAY_TIME)    # 延时不需太短，5~10s为宜, 注意此timer在多次启动后能否自动回收, 待测试。
                 print 'start plot timer.'
