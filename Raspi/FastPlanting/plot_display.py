@@ -8,6 +8,7 @@ from database import RecordDb
 TROOM = 'TRoom'
 TWATER = 'Twater'
 HUMIDITY = 'Humidity'
+TIME_FORMAT = 'yyyy-MM-dd hh:mm:ss'
 
 ONE_MINUTE = 60  # test
 TEN_MINUTES = (10*ONE_MINUTE)
@@ -186,7 +187,6 @@ class PlotDisplay(Qwt.QwtPlot):
                      self.selected)
 
     def showInfo(self, text=None):
-        print 'plot showInfo'
         if not text:
             if self.picker.rubberBand():
                 text = 'Cursor Pos: Press left mouse button in plot region'
@@ -196,7 +196,7 @@ class PlotDisplay(Qwt.QwtPlot):
     # showInfo()
     
     def moved(self, point):
-        print 'plot moved x=' + str(point.x()) + ' y=' + str(point.y())
+        #print 'plot moved x=' + str(point.x()) + ' y=' + str(point.y())
         info = "Freq=%g, Ampl=%g, Phase=%g" % (
             self.qwtPlot.invTransform(Qwt.QwtPlot.xBottom, point.x()),
             self.qwtPlot.invTransform(Qwt.QwtPlot.yLeft, point.y()),
@@ -250,8 +250,8 @@ class PlotDisplay(Qwt.QwtPlot):
         time_range = {}
         end = QtCore.QDateTime.currentDateTime()
         start = end.addSecs(-time_limit)
-        time_range['end'] = str(end.toString('yyyy-MM-dd hh:mm:ss'))
-        time_range['start'] = str(start.toString('yyyy-MM-dd hh:mm:ss'))
+        time_range['end'] = str(end.toString(TIME_FORMAT))
+        time_range['start'] = str(start.toString(TIME_FORMAT))
         global global_plot_time_base
         global_plot_time_base = start
         return time_range
@@ -286,27 +286,33 @@ class PlotDisplay(Qwt.QwtPlot):
             self.curve_data[TROOM].append(data[1])
             self.curve_data[HUMIDITY].append(data[2])
             self.curve_data[TWATER].append(data[3])
-        self.start_time = QtCore.QDateTime.fromString(times[0], 'yyyy-MM-dd hh:mm:ss')  # start time for static display.
+        if time_limit == ALL_TIME_STATIC:
+            self.start_time = QtCore.QDateTime.fromString(times[0], TIME_FORMAT)  # node start time for static display.
+        else:
+            self.start_time = QtCore.QDateTime.fromString(time_range['start'], TIME_FORMAT)  # all range of time.
         start_sec = self.start_time.toMSecsSinceEpoch() / 1000.0
         if self.base_msec == 0:
             self.base_msec = self.start_time.toMSecsSinceEpoch()
         for time in times:
-            time = QtCore.QDateTime.fromString(time, 'yyyy-MM-dd hh:mm:ss')
+            time = QtCore.QDateTime.fromString(time, TIME_FORMAT)
             current_sec = time.toMSecsSinceEpoch() / 1000.0
             current_sec -= start_sec
             self.time_data.append(current_sec)
+        return time_range['start']
         #print len(self.time_data), self.time_data
         #print self.time_data[0], self.time_data[-1], len(self.time_data)
         #print (self.time_data[-1] - self.time_data[0]) / 3600/24
 
     # 绘制time_limit时限的静态图表
     def draw_time_limit_plot(self, time_limit):
-        ret = self.read_node_db_info(time_limit)
-        if ret == -1:
+        start_time = self.read_node_db_info(time_limit)
+        if start_time == -1:
             print 'draw_time_limit_plot() ret -1'
             return
+        start_time = QtCore.QDateTime.fromString(start_time, TIME_FORMAT) 
+        print start_time
         self.qwtPlot.setAxisScaleDraw(
-                Qwt.QwtPlot.xBottom, TimeScaleDraw(self.start_time))
+                Qwt.QwtPlot.xBottom, TimeScaleDraw(start_time))
         self.qwtPlot.setAxisLabelRotation(Qwt.QwtPlot.xBottom, -60.0)
         self.qwtPlot.setAxisLabelAlignment(
             Qwt.QwtPlot.xBottom, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
