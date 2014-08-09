@@ -8,7 +8,7 @@ from database import RecordDb
 import threading
 import copy
 
-CLEAN_TIMER_DELAY = 3000
+CLEAN_TIMER_DELAY = 5000
 DB_TIMER_DELAY = 5000
 
 class XbeeThread(QtCore.QThread):
@@ -53,6 +53,7 @@ class XbeeThread(QtCore.QThread):
                     self.ui_mainwindow.table_range_display.removeRow(item.row())
 
                 for item in self.ui_mainwindow.table_plot_node.findItems(key, QtCore.Qt.MatchFixedString):
+                    print 'need to delete row=' + str(item.row()) + '  ' + key + '=' + str(self.addr_dict_current[key])
                     self.ui_mainwindow.table_plot_node.removeRow(item.row())
         self.addr_dict_last = copy.deepcopy(self.addr_dict_current)
         #self.timer = threading.Timer(MONITOR_TIMER_DELAY, self.timer_func_refresh_table)
