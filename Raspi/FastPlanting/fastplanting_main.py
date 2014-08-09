@@ -209,6 +209,9 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
             self.qwt_plot.selected_plot_node = self.selected_plot_node  # 保持选中节点同步
             time_limit = plot_display.PlotDisplay.get_plot_time_limit(self.combo_plot_range.currentIndex())
             if time_limit != plot_display.ALL_TIME_STATIC:  # 判断是否为静态显示。
+                if self.plot_timer.isActive():
+                    self.qwt_plot.clean_plot()
+                    self.plot_timer.stop()
                 self.plot_timer.start(plot_display.MONITOR_DELAY_TIME)    # 延时不需太短，5~10s为宜, 注意此timer在多次启动后能否自动回收, 待测试。
                 print 'start plot timer.'
             else:

@@ -223,7 +223,7 @@ class PlotDisplay(Qwt.QwtPlot):
                 Qwt.QwtPlot.xBottom, QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
             self.first_update_flag = False
 
-        if (self.time_limit/MONITOR_DELAY_SECOND) > len(self.time_data):
+        if (self.time_limit/MONITOR_DELAY_SECOND) > len(self.time_data):    # 选中时限比已存数据时间长，则在原有基础上增加。
             self.current_msec = QtCore.QDateTime.currentMSecsSinceEpoch()
             time = (self.current_msec - self.base_msec) / 1000
 
@@ -231,7 +231,7 @@ class PlotDisplay(Qwt.QwtPlot):
                 self.curve_data[key].append(sensor_data[key])
             self.time_data.append(time)
         else:
-            for i in xrange(0, len(self.time_data)):
+            for i in xrange(0, len(self.time_data)):                        # 选中时限比已存数据时间短，则原有数据出队，新增数据入队。
                 self.time_data[i] += MONITOR_DELAY_SECOND
             for key in self.curve_data.keys():
                 self.curve_data[key][0:-1] = self.curve_data[key][1:]
