@@ -19,7 +19,8 @@
 #define HUMI_CTRL_PIN 3  // for humidifier on/off control
 #define ONE_WIRE_BUS 4  // for 18b20 water temprature 
 #define WATER_CTRL_PIN 5 // for 18b20 water ctrl.
-#define LED_CTRL_PIN 6
+#define LED_CTRL_PIN 6  //for LED
+#define STATUS_LED 7  // for status LED
 /* PIN DEFINE END */
 
 /* DATA AREA BEGIN */
@@ -507,6 +508,8 @@ void setup()
     pinMode(HUMI_CTRL_PIN, OUTPUT);
     pinMode(WATER_CTRL_PIN, OUTPUT);
     pinMode(LED_CTRL_PIN, OUTPUT);
+    pinMode(STATUS_LED, OUTPUT);
+    digitalWrite(STATUS_LED, HIGH);
 
     // Start up the 18b20 water sensor library
     water_sensor.begin();

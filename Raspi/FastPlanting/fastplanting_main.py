@@ -212,7 +212,8 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
                 if self.plot_timer.isActive():
                     self.qwt_plot.clean_plot()
                     self.plot_timer.stop()
-                self.plot_timer.start(plot_display.MONITOR_DELAY_TIME)    # 延时不需太短，5~10s为宜, 注意此timer在多次启动后能否自动回收, 待测试。
+                self.redraw_plot(self.combo_plot_range.currentIndex())
+                #self.plot_timer.start(plot_display.MONITOR_DELAY_TIME)    # 延时不需太短，5~10s为宜, 注意此timer在多次启动后能否自动回收, 待测试。
                 print 'start plot timer.'
             else:
                 self.qwt_plot.redraw_plot(time_limit)   # 进行静态显示。
