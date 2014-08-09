@@ -8,7 +8,7 @@ from database import RecordDb
 import threading
 import copy
 
-CLEAN_TIMER_DELAY = 5000
+CLEAN_TIMER_DELAY = 5000    # 不能少于5s，节点越多，轮到每个节点刷新的间隔越长，因此这个延时应是动态的。
 DB_TIMER_DELAY = 5000
 
 class XbeeThread(QtCore.QThread):
@@ -44,6 +44,8 @@ class XbeeThread(QtCore.QThread):
 
     def refresh_table_event(self):
         for key in self.addr_dict_last:
+            #print 'last = ' + str(self.addr_dict_last)
+            #print 'current = ' + str(self.addr_dict_current)
             if self.addr_dict_last[key] == self.addr_dict_current[key]:
                 for item in self.ui_mainwindow.table_node_info.findItems(key, QtCore.Qt.MatchFixedString):
                     #print 'need to delete row=' + str(item.row()) + '  ' + key + '=' + str(self.addr_dict_current[key])
@@ -108,7 +110,7 @@ class XbeeThread(QtCore.QThread):
 
         # 如果找到item，更新到这一行; 如果没有，增加新行;如果有多行，全部删除，重新建一行(不应出现多行的情况,未实现)。
         for item in self.ui_mainwindow.table_node_info.findItems(addr_long, QtCore.Qt.MatchFixedString):
-            #print item, item.row(), item.column()
+            #print addr_long, item.row(), self.addr_dict_current
             #item.setText(data[0])
             self.ui_mainwindow.table_node_info.setItem(item.row(), 1, item_addr_short)
             self.ui_mainwindow.table_node_info.setItem(item.row(), 2, item_temperature_room)
@@ -249,6 +251,6 @@ class XbeeThread(QtCore.QThread):
                     #print data
                     self.message_received(data)
 
-                time.sleep(1)
+                time.sleep(0.1)    # 100ms间隔，可支持每秒刷新10次节点，即最多支持10个节点。
             except KeyboardInterrupt:
                 break

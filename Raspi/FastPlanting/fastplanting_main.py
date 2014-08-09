@@ -193,7 +193,8 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
 
     # 每一次重置显示范围，都要从数据库中读取对应数据，进行解析，不要使用PlotDisplay类中的本地数据。
     def redraw_plot(self, selected_index):
-        self.plot_timer.stop()
+        if self.plot_timer.isActive():
+            self.plot_timer.stop()
         time_limit = plot_display.PlotDisplay.get_plot_time_limit(selected_index)
         self.qwt_plot.redraw_plot(time_limit)
         if time_limit != plot_display.ALL_TIME_STATIC:
@@ -212,7 +213,8 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
                 if self.plot_timer.isActive():
                     self.qwt_plot.clean_plot()
                     self.plot_timer.stop()
-                self.plot_timer.start(plot_display.MONITOR_DELAY_TIME)    # 延时不需太短，5~10s为宜, 注意此timer在多次启动后能否自动回收, 待测试。
+                self.redraw_plot(self.combo_plot_range.currentIndex())
+                #self.plot_timer.start(plot_display.MONITOR_DELAY_TIME)    # 延时不需太短，5~10s为宜, 注意此timer在多次启动后能否自动回收, 待测试。
                 print 'start plot timer.'
             else:
                 self.qwt_plot.redraw_plot(time_limit)   # 进行静态显示。
@@ -362,7 +364,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
                 #      20.0,30.0,90.0,100.0,20.0,35.0
                 send_data = temp_min_data + ',' + temp_max_data + ',' + humi_min_data + ',' + humi_max_data + ',' + \
                     wtemp_min_data + ',' + wtemp_max_data + ',' + led_status
-                print send_data
+                #print send_data
                 self.send_config_func(addr_long_short, send_data)
 
     def send_config_func(self, addr_long_short, send_data):
@@ -371,8 +373,8 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
                 addr_long = str(addr[0]).decode('hex')
                 addr_short = str(addr[1]).decode('hex')
                 
-                print addr_long_short, send_data
-                print addr_long, addr_short
+                #print addr_long_short, send_data
+                #print addr_long, addr_short
 
                 # Send Tx packet Temperature min
                 if self.serial.isOpen():
@@ -382,7 +384,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
                 # Wait for response
                 if self.serial.isOpen() and self.serial.inWaiting():
                     response = self.xbee.wait_read_frame()
-                    print response
+                    #print response
                     self.line_config_status.setText(u'设置成功！')
         except Exception, e:
                 print '[Error]set_config() Transfer Fail!!', e
