@@ -237,7 +237,8 @@ class PlotDisplay(Qwt.QwtPlot):
                 self.curve_data[key][0:-1] = self.curve_data[key][1:]
                 self.curve_data[key][-1] = sensor_data[key]
 
-        #print len(self.time_data), self.time_data[0], self.time_data[-1]
+        print len(self.time_data), self.time_data[0], self.time_data[-1]
+        print QtCore.QDateTime.currentDateTime()
         #print self.time_data
         self.setAxisScale(
                 Qwt.QwtPlot.xBottom, self.time_data[0], self.time_data[-1])
