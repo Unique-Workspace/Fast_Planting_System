@@ -131,7 +131,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         QtCore.QObject.connect(self.pushButton_save, QtCore.SIGNAL(_fromUtf8("clicked()")), self.save_config)
         QtCore.QObject.connect(self.menu_save_config, QtCore.SIGNAL(_fromUtf8("triggered()")), self.save_config)
         QtCore.QObject.connect(self.table_plot_node, QtCore.SIGNAL(_fromUtf8("itemClicked(QTableWidgetItem*)")), self.refresh_plot)
-        QtCore.QObject.connect(self.combo_plot_range, QtCore.SIGNAL(_fromUtf8("activated(int)")), self.redraw_plot)
+        QtCore.QObject.connect(self.combo_plot_range, QtCore.SIGNAL(_fromUtf8("activated(int)")), self.redraw_plot_event)
 
         #self.listTableView.setModel(self.item_model)
         self.table_node_info.horizontalHeader().setDefaultSectionSize(90)
@@ -161,6 +161,8 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         self.selected_plot_node = {}
         self.selected_plot_node['row'] = -1    # default value
         self.selected_plot_node['text'] = ''
+        
+        self.selected_combo_range = 0
 
         self.show_clock_time()
         clock_timer = QtCore.QTimer(self)
@@ -191,6 +193,13 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         self.xbee_thread.wait()   # must call wait() to quit the xbee thread.
         print 'FastPlantingFrame del.'
 
+    def redraw_plot_event(self, selected_index):
+        if selected_index == self.selected_combo_range:
+            print 'redraw_plot return 0.'
+            return 0
+        self.selected_combo_range = selected_index
+        self.redraw_plot(selected_index)
+    
     # 每一次重置显示范围，都要从数据库中读取对应数据，进行解析，不要使用PlotDisplay类中的本地数据。
     def redraw_plot(self, selected_index):
         if self.plot_timer.isActive():
@@ -228,15 +237,16 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         # 然后再往下执行，加上当前数据更新。
         if self.table_node_info.rowCount() > 0:
             sensor_data = {}
-            item = self.table_node_info.item(self.selected_plot_node['row'], 0)
-            if item.text() != self.selected_plot_node['text']:   # 选中节点不存在，则清除plot,并返回.
-                print 'plot_timer_event - clean ' + self.selected_plot_node['text']
-                self.qwt_plot.clean_plot()
-                self.selected_plot_node['row'] = -1
-                self.selected_plot_node['text'] = ''
-                self.qwt_plot.selected_plot_node = self.selected_plot_node  # 保持选中节点同步
-                self.plot_timer.stop()
-                return
+            if self.selected_plot_node['row'] != -1:
+                item = self.table_node_info.item(self.selected_plot_node['row'], 0)
+                if item.text() != self.selected_plot_node['text']:   # 选中节点不存在，则清除plot,并返回.
+                    print 'plot_timer_event - clean ' + self.selected_plot_node['text']
+                    self.qwt_plot.clean_plot()
+                    self.selected_plot_node['row'] = -1
+                    self.selected_plot_node['text'] = ''
+                    self.qwt_plot.selected_plot_node = self.selected_plot_node  # 保持选中节点同步
+                    self.plot_timer.stop()
+                    return
             item = self.table_node_info.item(self.selected_plot_node['row'], 2)  # 室内温度
             temp_room = float(item.text())
             item = self.table_node_info.item(self.selected_plot_node['row'], 3)  # 湿度
