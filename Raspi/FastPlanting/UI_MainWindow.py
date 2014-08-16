@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'UI_MainWindow.ui'
 #
-# Created: Sat Jul 19 20:31:52 2014
+# Created: Sat Aug 16 20:57:07 2014
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -81,6 +81,17 @@ class Ui_MainWindow(object):
         self.lcdNumber_date.setNumDigits(10)
         self.lcdNumber_date.setObjectName(_fromUtf8("lcdNumber_date"))
         self.verticalLayout.addWidget(self.lcdNumber_date)
+        self.horizontalLayout_4 = QtGui.QHBoxLayout()
+        self.horizontalLayout_4.setObjectName(_fromUtf8("horizontalLayout_4"))
+        spacerItem = QtGui.QSpacerItem(118, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.horizontalLayout_4.addItem(spacerItem)
+        self.button_setup_time = QtGui.QPushButton(self.groupBox)
+        self.button_setup_time.setEnabled(True)
+        self.button_setup_time.setMinimumSize(QtCore.QSize(125, 50))
+        self.button_setup_time.setMaximumSize(QtCore.QSize(120, 16777215))
+        self.button_setup_time.setObjectName(_fromUtf8("button_setup_time"))
+        self.horizontalLayout_4.addWidget(self.button_setup_time)
+        self.verticalLayout.addLayout(self.horizontalLayout_4)
         self.label = QtGui.QLabel(self.groupBox)
         self.label.setObjectName(_fromUtf8("label"))
         self.verticalLayout.addWidget(self.label)
@@ -95,6 +106,7 @@ class Ui_MainWindow(object):
         self.button_scan.setCheckable(False)
         self.button_scan.setObjectName(_fromUtf8("button_scan"))
         self.button_open_serial = QtGui.QPushButton(self.splitter)
+        self.button_open_serial.setMinimumSize(QtCore.QSize(0, 0))
         self.button_open_serial.setObjectName(_fromUtf8("button_open_serial"))
         self.verticalLayout.addWidget(self.splitter)
         self.horizontalLayout_2.addWidget(self.groupBox)
@@ -201,7 +213,6 @@ class Ui_MainWindow(object):
         self.menu_config_serial.setObjectName(_fromUtf8("menu_config_serial"))
         self.menu.addAction(self.menu_config_serial)
         self.menu.addAction(self.menu_scan_node)
-        self.menu.addAction(self.action_5)
         self.menu.addSeparator()
         self.menu.addAction(self.menu_save_config)
         self.menu.addAction(self.action_8)
@@ -225,6 +236,7 @@ class Ui_MainWindow(object):
         self.previewerBox.setTitle(_translate("MainWindow", "节点信息", None))
         self.groupBox.setTitle(_translate("MainWindow", "控制", None))
         self.label_2.setText(_translate("MainWindow", "时间日期：", None))
+        self.button_setup_time.setText(_translate("MainWindow", "时间设置", None))
         self.label.setText(_translate("MainWindow", "提醒：", None))
         self.button_scan.setText(_translate("MainWindow", "扫描", None))
         self.button_open_serial.setText(_translate("MainWindow", "连接", None))
