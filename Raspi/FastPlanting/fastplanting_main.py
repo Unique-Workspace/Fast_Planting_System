@@ -13,10 +13,11 @@ This is main program for Fast Plant Growing System.
 from PyQt4 import QtCore, QtGui
 from UI_MainWindow import Ui_MainWindow
 from UI_SerialDialog import Ui_SerialDialog
+from UI_ConfigDialog import Ui_ConfigDialog
 from XbeeThread import XbeeThread
 from xbee import ZigBee
 import serial
-import sys
+import sys, os
 from config_process import ConfigProcess
 import plot_display
 
@@ -89,6 +90,32 @@ class ComboxDelegate(QtGui.QItemDelegate):
     #   self.commitData.emit(self.sender())
 
 
+class TimeDialogFrame(QtGui.QDialog, Ui_ConfigDialog):
+    def __init__(self):
+        super(TimeDialogFrame, self).__init__()
+
+        self.setupUi(self)
+
+        QtCore.QObject.connect(self.pushButton_confirm, QtCore.SIGNAL(_fromUtf8("clicked()")), self.set_timedate)
+        self.time = None
+        self.date = None
+        print 'TimeDialogFrame init.'
+
+    def __del__(self):
+        print 'TimeDialogFrame del.'
+
+    def set_timedate(self):
+        self.time = self.timeEdit.time()
+        self.date = self.dateEdit.date()
+        self.accept()
+
+    def get_timedate(self):
+        if self.time is not None and self.date is not None:
+            return self.time, self.date
+        else:
+            return None
+
+
 class SerialDialogFrame(QtGui.QDialog, Ui_SerialDialog):
     def __init__(self, serial_port=None, baund_rate=None):
         super(SerialDialogFrame, self).__init__()
@@ -132,6 +159,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         QtCore.QObject.connect(self.menu_save_config, QtCore.SIGNAL(_fromUtf8("triggered()")), self.save_config)
         QtCore.QObject.connect(self.table_plot_node, QtCore.SIGNAL(_fromUtf8("itemClicked(QTableWidgetItem*)")), self.refresh_plot)
         QtCore.QObject.connect(self.combo_plot_range, QtCore.SIGNAL(_fromUtf8("activated(int)")), self.redraw_plot_event)
+        QtCore.QObject.connect(self.button_setup_time, QtCore.SIGNAL(_fromUtf8("clicked()")), self.setup_time)
 
         #self.listTableView.setModel(self.item_model)
         self.table_node_info.horizontalHeader().setDefaultSectionSize(90)
@@ -192,6 +220,22 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         self.xbee_thread.xbee_thread_stop()
         self.xbee_thread.wait()   # must call wait() to quit the xbee thread.
         print 'FastPlantingFrame del.'
+
+    def setup_time(self):
+        time_dialog = TimeDialogFrame()
+        ret = time_dialog.exec_()
+        if ret == 1:
+            current_time, current_date = time_dialog.get_timedate()
+            current_time = str(current_time.toString('hh:mm:ss'))
+            current_date = str(current_date.toString('yyyyMMdd'))
+            time_cmd = 'sudo date -s ' + current_time
+            date_cmd = 'sudo date -s ' + current_date
+            os.popen(date_cmd)
+            os.popen(time_cmd)
+            print date_cmd
+            print time_cmd
+        elif ret == 0:
+            print 'discard config.'
 
     def redraw_plot_event(self, selected_index):
         if selected_index == self.selected_combo_range:
