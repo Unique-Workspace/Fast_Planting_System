@@ -99,10 +99,13 @@ class TimeDialogFrame(QtGui.QDialog, Ui_ConfigDialog):
         QtCore.QObject.connect(self.pushButton_confirm, QtCore.SIGNAL(_fromUtf8("clicked()")), self.set_timedate)
         self.time = None
         self.date = None
-        print 'TimeDialogFrame init.'
+        print self.timeEdit.displayFormat()
+        print self.dateEdit.displayFormat()
+        #print 'TimeDialogFrame init.'
 
     def __del__(self):
-        print 'TimeDialogFrame del.'
+        pass
+        #print 'TimeDialogFrame del.'
 
     def set_timedate(self):
         self.time = self.timeEdit.time()
@@ -232,8 +235,6 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
             date_cmd = 'sudo date -s ' + current_date
             os.popen(date_cmd)
             os.popen(time_cmd)
-            print date_cmd
-            print time_cmd
         elif ret == 0:
             print 'discard config.'
 
