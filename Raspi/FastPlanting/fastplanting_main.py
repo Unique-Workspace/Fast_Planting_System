@@ -212,7 +212,8 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
 
         self.xbee_thread = XbeeThread(self.serial, self.xbee, self)
         self.xbee_thread.xbee_thread_start()
-
+        
+        self.open_serial()
         print 'FastPlantingFrame init.'
 
     def __del__(self):
