@@ -17,6 +17,7 @@ from UI_ConfigDialog import Ui_ConfigDialog
 from XbeeThread import XbeeThread
 from xbee import ZigBee
 import serial
+import copy
 import sys, os
 from config_process import ConfigProcess
 import plot_display
@@ -262,7 +263,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         if new_selected_row != self.selected_plot_node['row']:
             self.selected_plot_node['row'] = new_selected_row
             self.selected_plot_node['text'] = str(selected_item.text())
-            self.qwt_plot.selected_plot_node = self.selected_plot_node  # 保持选中节点同步
+            self.qwt_plot.selected_plot_node = copy.deepcopy(self.selected_plot_node)  # 保持选中节点同步
             time_limit = plot_display.PlotDisplay.get_plot_time_limit(self.combo_plot_range.currentIndex())
             if time_limit != plot_display.ALL_TIME_STATIC:  # 判断是否为静态显示。
                 if self.plot_timer.isActive():
@@ -283,14 +284,14 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         # 然后再往下执行，加上当前数据更新。
         if self.table_node_info.rowCount() > 0:
             sensor_data = {}
-            if self.selected_plot_node['row'] != -1:
+            if 'row' in self.selected_plot_node and self.selected_plot_node['row'] != -1:
                 item = self.table_node_info.item(self.selected_plot_node['row'], 0)
-                if item.text() != self.selected_plot_node['text']:   # 选中节点不存在，则清除plot,并返回.
+                if 'text' in self.selected_plot_node and item.text() != self.selected_plot_node['text']:   # 选中节点不存在，则清除plot,并返回.
                     print 'plot_timer_event - clean ' + self.selected_plot_node['text']
                     self.qwt_plot.clean_plot()
                     self.selected_plot_node['row'] = -1
                     self.selected_plot_node['text'] = ''
-                    self.qwt_plot.selected_plot_node = self.selected_plot_node  # 保持选中节点同步
+                    self.qwt_plot.selected_plot_node = copy.deepcopy(self.selected_plot_node)    # 保持选中节点同步
                     self.plot_timer.stop()
                     return
             item = self.table_node_info.item(self.selected_plot_node['row'], 2)  # 室内温度
