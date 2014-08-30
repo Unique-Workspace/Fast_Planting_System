@@ -282,6 +282,9 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
     def plot_timer_event(self):
         # 此处应该载入从数据库读出的历史数据，以列表形式传递给 self.qwt_plot.update_plot 进行刷新。
         # 然后再往下执行，加上当前数据更新。
+        if 'text' in self.selected_plot_node and self.selected_plot_node['text'] ==  ''and    \
+        'row' in self.selected_plot_node and self.selected_plot_node['row'] == -1:
+            return 
         if self.table_node_info.rowCount() > 0:
             sensor_data = {}
             if 'row' in self.selected_plot_node and self.selected_plot_node['row'] != -1:
@@ -294,6 +297,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
                     self.qwt_plot.selected_plot_node = copy.deepcopy(self.selected_plot_node)    # 保持选中节点同步
                     self.plot_timer.stop()
                     return
+            print self.selected_plot_node
             item = self.table_node_info.item(self.selected_plot_node['row'], 2)  # 室内温度
             temp_room = float(item.text())
             item = self.table_node_info.item(self.selected_plot_node['row'], 3)  # 湿度

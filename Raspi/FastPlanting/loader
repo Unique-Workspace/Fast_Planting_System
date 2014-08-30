@@ -1,2 +1,2 @@
 #!/bin/bash
-python fastplanting_main.py
+python fastplanting_main.py 2>>$1

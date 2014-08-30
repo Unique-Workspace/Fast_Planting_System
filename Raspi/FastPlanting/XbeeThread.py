@@ -8,7 +8,7 @@ from database import RecordDb
 import threading
 import copy, os
 
-CLEAN_TIMER_DELAY = 5000    # 不能少于5s，节点越多，轮到每个节点刷新的间隔越长，因此这个延时应是动态的。
+CLEAN_TIMER_DELAY = 10000    # 不能少于5s，节点越多，轮到每个节点刷新的间隔越长，因此这个延时应是动态的。
 DB_TIMER_DELAY = 5000
 
 class XbeeThread(QtCore.QThread):

@@ -13,7 +13,7 @@ do
     else 
         echo "TWS service was not started" 
         echo "Starting service ..." 
-        $PWD/loader 
+        $PWD/loader $log_file
         echo "TWS service was exited at `date`" >> $log_file
     fi 
     sleep 10 
