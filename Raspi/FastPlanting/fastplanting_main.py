@@ -251,10 +251,6 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
     def redraw_plot(self, selected_index):
         if self.plot_timer.isActive():
             self.plot_timer.stop()
-        else:
-            time_limit = plot_display.PlotDisplay.get_plot_time_limit(selected_index)
-            self.qwt_plot.time_limit = time_limit
-            return 0
         time_limit = plot_display.PlotDisplay.get_plot_time_limit(selected_index)
         self.qwt_plot.redraw_plot(time_limit)
         if time_limit != plot_display.ALL_TIME_STATIC:
