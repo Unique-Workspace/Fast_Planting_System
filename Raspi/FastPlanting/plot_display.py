@@ -270,6 +270,9 @@ class PlotDisplay(Qwt.QwtPlot):
 
     # 从数据库读取节点信息，读完关闭
     def read_node_db_info(self, time_limit):
+        if 'text' not in self.selected_plot_node:
+            print '[Warning] Not select the node.'
+            return -1
         times = []
         database = RecordDb()
         if time_limit == ALL_TIME_STATIC:
