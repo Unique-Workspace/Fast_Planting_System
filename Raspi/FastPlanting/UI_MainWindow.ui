@@ -207,8 +207,6 @@
           <zorder>label_2</zorder>
           <zorder>lcdNumber_time</zorder>
           <zorder>lcdNumber_date</zorder>
-          <zorder>button_setup_time</zorder>
-          <zorder>horizontalSpacer</zorder>
          </widget>
         </item>
        </layout>
@@ -253,27 +251,27 @@
                </property>
                <item>
                 <property name="text">
-                 <string>最近1分钟</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>最近30分钟</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
                  <string>最近1小时</string>
                 </property>
                </item>
                <item>
                 <property name="text">
-                 <string>最近6小时</string>
+                 <string>最近3小时</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>最近12小时</string>
                 </property>
                </item>
                <item>
                 <property name="text">
                  <string>最近1天</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>最近3天</string>
                 </property>
                </item>
                <item>
@@ -383,7 +381,7 @@
     <property name="title">
      <string>帮助</string>
     </property>
-    <addaction name="action"/>
+    <addaction name="menu_update_online"/>
     <addaction name="action_2"/>
    </widget>
    <addaction name="menu"/>
@@ -391,9 +389,9 @@
    <addaction name="menu_3"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="action">
+  <action name="menu_update_online">
    <property name="text">
-    <string>调试</string>
+    <string>在线更新</string>
    </property>
   </action>
   <action name="action_2">

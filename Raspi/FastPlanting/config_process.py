@@ -31,7 +31,7 @@ class ConfigProcess():
                 print 'load_config empty.'
                 return
             records = line.split(',')
-            if records[0] in self.config_dict:
+            if records[0] in self.config_dict.keys():
                 self.config_dict[records[0]]['value'] = records[0]
                 self.config_dict[records[0]]['tmin'] = '%4.2f' % float(records[1])
                 self.config_dict[records[0]]['tmax'] = '%4.2f' % float(records[2])
@@ -81,7 +81,7 @@ class ConfigProcess():
     # data数据格式：tuple: (addr,tmin,tmax,hmin,hmax,wtmin,wtmax,led)
     def set_config_value(self, data):
         if len(data) == 8:
-            if data[0] in self.config_dict:
+            if data[0] in self.config_dict.keys():
                 self.config_dict[data[0]] = {}
                 self.config_dict[data[0]]['value'] = data[0]
                 self.config_dict[data[0]]['tmin'] = '%4.2f' % float(data[1])
@@ -110,7 +110,7 @@ class ConfigProcess():
 
     # 传入addr_long，在字典中查找对应参数，并返回元组
     def get_config_value(self, addr_long):
-        if addr_long in self.config_dict:
+        if addr_long in self.config_dict.keys():
             tmin = self.config_dict[addr_long]['tmin']
             tmax = self.config_dict[addr_long]['tmax']
             hmin = self.config_dict[addr_long]['hmin']

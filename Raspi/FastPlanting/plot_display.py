@@ -19,7 +19,7 @@ SIX_HOURS = (6*ONE_HOUR)
 TWELVE_HOURS = (12*ONE_HOUR)
 ONE_DAY = (24*ONE_HOUR)
 THREE_DAYS = (3*ONE_DAY)
-SEVEN_DAYS = (7*ONE_DAY)
+ONE_WEEK = (7*ONE_DAY)
 ONE_MONTH = (30*ONE_DAY)
 ALL_TIME_STATIC = 0
 MONITOR_DELAY_TIME = 5000
@@ -270,7 +270,7 @@ class PlotDisplay(Qwt.QwtPlot):
 
     # 从数据库读取节点信息，读完关闭
     def read_node_db_info(self, time_limit):
-        if 'text' not in self.selected_plot_node:
+        if 'text' not in self.selected_plot_node.keys():
             print '[Warning] Not select the node.'
             return -1
         times = []
@@ -356,17 +356,17 @@ class PlotDisplay(Qwt.QwtPlot):
         if selected_index == 7:
             time_limit = ALL_TIME_STATIC
         elif selected_index == 0:
-            time_limit = ONE_MINUTE
-        elif selected_index == 1:
-            time_limit = THIRTY_MINUTES
-        elif selected_index == 2:
             time_limit = ONE_HOUR
+        elif selected_index == 1:
+            time_limit = THREE_HOURS
+        elif selected_index == 2:
+            time_limit = TWELVE_HOURS
         elif selected_index == 3:
-            time_limit = SIX_HOURS
-        elif selected_index == 4:
             time_limit = ONE_DAY
+        elif selected_index == 4:
+            time_limit = THREE_DAYS
         elif selected_index == 5:
-            time_limit = SEVEN_DAYS
+            time_limit = ONE_WEEK
         elif selected_index == 6:
             time_limit = ONE_MONTH
         else:

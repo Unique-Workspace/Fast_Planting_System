@@ -40,7 +40,7 @@ class SlaveNode:
         # must do this to make sure the template is empty when we rebuild the template
         self.template = ""
         sql_str = "("
-        for keys in self.node_dict:
+        for keys in self.node_dict.keys():
             sql_str += keys + " " + str(self.node_dict[keys]["type"]) + str(self.node_dict[keys]["property"]) + ","
         sql_str = sql_str[0:(sql_str.__len__()-1)]
         sql_str += ")"
@@ -49,13 +49,13 @@ class SlaveNode:
     def create_column(self):
         #just like the template
         self.column = []
-        for keys in self.node_dict:
+        for keys in self.node_dict.keys():
             self.column.append(keys)
 
     def create_values(self):
         #just like the template
         self.values = []
-        for keys in self.node_dict:
+        for keys in self.node_dict.keys():
             if self.node_dict[keys]["type"] == "REAL" or self.node_dict[keys]["type"] == "INTEGER":
                 str_temp = str(self.node_dict[keys]["value"])
                 self.values.append(str_temp)

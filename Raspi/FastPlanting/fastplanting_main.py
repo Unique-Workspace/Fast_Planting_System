@@ -18,7 +18,9 @@ from XbeeThread import XbeeThread
 from xbee import ZigBee
 import serial
 import copy
-import sys, os
+import sys
+import os
+import commands
 from config_process import ConfigProcess
 import plot_display
 
@@ -164,6 +166,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         QtCore.QObject.connect(self.table_plot_node, QtCore.SIGNAL(_fromUtf8("itemClicked(QTableWidgetItem*)")), self.refresh_plot)
         QtCore.QObject.connect(self.combo_plot_range, QtCore.SIGNAL(_fromUtf8("activated(int)")), self.redraw_plot_event)
         QtCore.QObject.connect(self.button_setup_time, QtCore.SIGNAL(_fromUtf8("clicked()")), self.setup_time)
+        QtCore.QObject.connect(self.menu_update_online, QtCore.SIGNAL(_fromUtf8("clicked()")), self.update_online)
 
         #self.listTableView.setModel(self.item_model)
         self.table_node_info.horizontalHeader().setDefaultSectionSize(90)
@@ -226,6 +229,12 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         self.xbee_thread.wait()   # must call wait() to quit the xbee thread.
         print 'FastPlantingFrame del.'
 
+    def update_online(self):
+        update_cmd = 'cd /home/pi/Workspace/Fast_Planting_System/Raspi/FastPlanting && git pull'
+        #output = os.popen(update_cmd)
+        (status, output) = commands.getstatusoutput(update_cmd)
+        print status, output
+
     def setup_time(self):
         time_dialog = TimeDialogFrame()
         ret = time_dialog.exec_()
@@ -282,14 +291,14 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
     def plot_timer_event(self):
         # 此处应该载入从数据库读出的历史数据，以列表形式传递给 self.qwt_plot.update_plot 进行刷新。
         # 然后再往下执行，加上当前数据更新。
-        if 'text' in self.selected_plot_node and self.selected_plot_node['text'] ==  ''and    \
-        'row' in self.selected_plot_node and self.selected_plot_node['row'] == -1:
+        if 'text' in self.selected_plot_node.keys() and self.selected_plot_node['text'] == ''and \
+            'row' in self.selected_plot_node.keys() and self.selected_plot_node['row'] == -1:
             return 
         if self.table_node_info.rowCount() > 0:
             sensor_data = {}
-            if 'row' in self.selected_plot_node and self.selected_plot_node['row'] != -1:
+            if 'row' in self.selected_plot_node.keys() and self.selected_plot_node['row'] != -1:
                 item = self.table_node_info.item(self.selected_plot_node['row'], 0)
-                if 'text' in self.selected_plot_node and item.text() != self.selected_plot_node['text']:   # 选中节点不存在，则清除plot,并返回.
+                if 'text' in self.selected_plot_node.keys() and item.text() != self.selected_plot_node['text']:   # 选中节点不存在，则清除plot,并返回.
                     print 'plot_timer_event - clean ' + self.selected_plot_node['text']
                     self.qwt_plot.clean_plot()
                     self.selected_plot_node['row'] = -1

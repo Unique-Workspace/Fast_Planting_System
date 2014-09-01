@@ -18,3 +18,4 @@
 /Raspi/FastPlanting/*.db
 *.pyc
 /Raspi/FastPlanting/*.pyc
+/Raspi/FastPlanting/cron.log

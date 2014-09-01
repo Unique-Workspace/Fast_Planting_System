@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'UI_MainWindow.ui'
 #
-# Created: Sat Aug 16 20:57:07 2014
+# Created: Mon Sep 01 23:02:30 2014
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -189,8 +189,8 @@ class Ui_MainWindow(object):
         self.statusbar = QtGui.QStatusBar(MainWindow)
         self.statusbar.setObjectName(_fromUtf8("statusbar"))
         MainWindow.setStatusBar(self.statusbar)
-        self.action = QtGui.QAction(MainWindow)
-        self.action.setObjectName(_fromUtf8("action"))
+        self.menu_update_online = QtGui.QAction(MainWindow)
+        self.menu_update_online.setObjectName(_fromUtf8("menu_update_online"))
         self.action_2 = QtGui.QAction(MainWindow)
         self.action_2.setObjectName(_fromUtf8("action_2"))
         self.action_3 = QtGui.QAction(MainWindow)
@@ -220,7 +220,7 @@ class Ui_MainWindow(object):
         self.menu_2.addAction(self.action_3)
         self.menu_2.addAction(self.action_10)
         self.menu_2.addAction(self.action_11)
-        self.menu_3.addAction(self.action)
+        self.menu_3.addAction(self.menu_update_online)
         self.menu_3.addAction(self.action_2)
         self.menubar.addAction(self.menu.menuAction())
         self.menubar.addAction(self.menu_2.menuAction())
@@ -242,11 +242,11 @@ class Ui_MainWindow(object):
         self.button_open_serial.setText(_translate("MainWindow", "连接", None))
         self.tab_display.setTabText(self.tab_display.indexOf(self.tab), _translate("MainWindow", "显示", None))
         self.groupBox_3.setTitle(_translate("MainWindow", "温湿度显示", None))
-        self.combo_plot_range.setItemText(0, _translate("MainWindow", "最近1分钟", None))
-        self.combo_plot_range.setItemText(1, _translate("MainWindow", "最近30分钟", None))
-        self.combo_plot_range.setItemText(2, _translate("MainWindow", "最近1小时", None))
-        self.combo_plot_range.setItemText(3, _translate("MainWindow", "最近6小时", None))
-        self.combo_plot_range.setItemText(4, _translate("MainWindow", "最近1天", None))
+        self.combo_plot_range.setItemText(0, _translate("MainWindow", "最近1小时", None))
+        self.combo_plot_range.setItemText(1, _translate("MainWindow", "最近3小时", None))
+        self.combo_plot_range.setItemText(2, _translate("MainWindow", "最近12小时", None))
+        self.combo_plot_range.setItemText(3, _translate("MainWindow", "最近1天", None))
+        self.combo_plot_range.setItemText(4, _translate("MainWindow", "最近3天", None))
         self.combo_plot_range.setItemText(5, _translate("MainWindow", "最近1周", None))
         self.combo_plot_range.setItemText(6, _translate("MainWindow", "最近30天", None))
         self.combo_plot_range.setItemText(7, _translate("MainWindow", "全部", None))
@@ -259,7 +259,7 @@ class Ui_MainWindow(object):
         self.menu.setTitle(_translate("MainWindow", "操作", None))
         self.menu_2.setTitle(_translate("MainWindow", "视图", None))
         self.menu_3.setTitle(_translate("MainWindow", "帮助", None))
-        self.action.setText(_translate("MainWindow", "调试", None))
+        self.menu_update_online.setText(_translate("MainWindow", "在线更新", None))
         self.action_2.setText(_translate("MainWindow", "关于", None))
         self.action_3.setText(_translate("MainWindow", "查看全部", None))
         self.menu_scan_node.setText(_translate("MainWindow", "扫描节点", None))

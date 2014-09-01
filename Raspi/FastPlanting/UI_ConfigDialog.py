@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'UI_ConfigDialog.ui'
 #
-# Created: Sat Aug 16 20:57:07 2014
+# Created: Mon Sep 01 23:02:32 2014
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -49,11 +49,8 @@ class Ui_ConfigDialog(object):
         self.horizontalLayout_2.addWidget(self.label)
         spacerItem1 = QtGui.QSpacerItem(50, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem1)
-
-        #self.timeEdit = QtGui.QTimeEdit(self.groupBox)
-        self.timeEdit = QtGui.QTimeEdit(QtCore.QTime.currentTime(), self.groupBox)
-        self.timeEdit.setMinimumSize(QtCore.QSize(100, 25))
-        self.timeEdit.setDisplayFormat("HH:mm:ss")
+        self.timeEdit = QtGui.QTimeEdit(self.groupBox)
+        self.timeEdit.setMinimumSize(QtCore.QSize(120, 25))
         self.timeEdit.setObjectName(_fromUtf8("timeEdit"))
         self.horizontalLayout_2.addWidget(self.timeEdit)
         self.verticalLayout_2.addLayout(self.horizontalLayout_2)
@@ -64,15 +61,13 @@ class Ui_ConfigDialog(object):
         self.horizontalLayout_3.addWidget(self.label_2)
         spacerItem2 = QtGui.QSpacerItem(50, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout_3.addItem(spacerItem2)
-
-        self.dateEdit = QtGui.QDateEdit(QtCore.QDate.currentDate(), self.groupBox)
-        #self.dateEdit = QtGui.QDateEdit(self.groupBox)
-        self.dateEdit.setMinimumSize(QtCore.QSize(100, 25))
-        self.dateEdit.setDisplayFormat("yyyy/MM/dd")
+        self.dateEdit = QtGui.QDateEdit(self.groupBox)
+        self.dateEdit.setMinimumSize(QtCore.QSize(120, 25))
         self.dateEdit.setObjectName(_fromUtf8("dateEdit"))
         self.horizontalLayout_3.addWidget(self.dateEdit)
         self.verticalLayout_2.addLayout(self.horizontalLayout_3)
         self.gridLayout.addWidget(self.groupBox, 0, 0, 1, 3)
+
         self.retranslateUi(ConfigDialog)
         QtCore.QObject.connect(self.pushButton_discard, QtCore.SIGNAL(_fromUtf8("clicked()")), ConfigDialog.reject)
         QtCore.QMetaObject.connectSlotsByName(ConfigDialog)

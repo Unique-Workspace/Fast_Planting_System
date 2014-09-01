@@ -45,7 +45,7 @@ class XbeeThread(QtCore.QThread):
             print 'stop do nothing.'
 
     def refresh_table_event(self):
-        for key in self.addr_dict_last:
+        for key in self.addr_dict_last.keys():
             #print 'last = ' + str(self.addr_dict_last)
             #print 'current = ' + str(self.addr_dict_current)
             if self.addr_dict_last[key] == self.addr_dict_current[key]:
