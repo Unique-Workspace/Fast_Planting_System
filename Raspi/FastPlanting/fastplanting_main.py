@@ -166,7 +166,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         QtCore.QObject.connect(self.table_plot_node, QtCore.SIGNAL(_fromUtf8("itemClicked(QTableWidgetItem*)")), self.refresh_plot)
         QtCore.QObject.connect(self.combo_plot_range, QtCore.SIGNAL(_fromUtf8("activated(int)")), self.redraw_plot_event)
         QtCore.QObject.connect(self.button_setup_time, QtCore.SIGNAL(_fromUtf8("clicked()")), self.setup_time)
-        QtCore.QObject.connect(self.menu_update_online, QtCore.SIGNAL(_fromUtf8("clicked()")), self.update_online)
+        QtCore.QObject.connect(self.menu_update_online, QtCore.SIGNAL(_fromUtf8("triggered()")), self.update_online)
 
         #self.listTableView.setModel(self.item_model)
         self.table_node_info.horizontalHeader().setDefaultSectionSize(90)
@@ -234,6 +234,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         #output = os.popen(update_cmd)
         (status, output) = commands.getstatusoutput(update_cmd)
         print status, output
+        print 'update_online()'
 
     def setup_time(self):
         time_dialog = TimeDialogFrame()

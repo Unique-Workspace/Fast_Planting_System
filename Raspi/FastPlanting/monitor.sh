@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ -z "$1" -o -z "$2"]
+if [ -z "$1" -o -z "$2" ]
 then
     echo "Usage: ./monitor.sh <user_name> <process_name>"
     exit
