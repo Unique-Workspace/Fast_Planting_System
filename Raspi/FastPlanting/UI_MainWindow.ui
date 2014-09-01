@@ -166,7 +166,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QPlainTextEdit" name="plainTextEdit"/>
+            <widget class="QTextEdit" name="plainTextEdit"/>
            </item>
            <item>
             <widget class="QSplitter" name="splitter">

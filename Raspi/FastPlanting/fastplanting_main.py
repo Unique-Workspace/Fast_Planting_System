@@ -233,8 +233,14 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         update_cmd = 'cd /home/pi/Workspace/Fast_Planting_System/Raspi/FastPlanting && git pull'
         #output = os.popen(update_cmd)
         (status, output) = commands.getstatusoutput(update_cmd)
-        print status, output
-        print 'update_online()'
+        if status == 0 and output == 'Already up-to-date.':
+            self.plainTextEdit.setText(u'已经是最新版本，无需更新。')
+        elif status == 0:
+            self.plainTextEdit.setText(u'在线更新成功！系统将自动重启，请稍等...')
+        else:
+            self.plainTextEdit.setText(u'在线更新失败！')
+            print status, output
+
 
     def setup_time(self):
         time_dialog = TimeDialogFrame()

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'UI_MainWindow.ui'
 #
-# Created: Mon Sep 01 23:02:30 2014
+# Created: Tue Sep 02 00:03:15 2014
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -95,7 +95,7 @@ class Ui_MainWindow(object):
         self.label = QtGui.QLabel(self.groupBox)
         self.label.setObjectName(_fromUtf8("label"))
         self.verticalLayout.addWidget(self.label)
-        self.plainTextEdit = QtGui.QPlainTextEdit(self.groupBox)
+        self.plainTextEdit = QtGui.QTextEdit(self.groupBox)
         self.plainTextEdit.setObjectName(_fromUtf8("plainTextEdit"))
         self.verticalLayout.addWidget(self.plainTextEdit)
         self.splitter = QtGui.QSplitter(self.groupBox)
