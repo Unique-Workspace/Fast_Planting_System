@@ -15,7 +15,7 @@ do
     else 
         echo "TWS service was not started" 
         echo "Starting service ..." 
-        python $PWD/fastplanting_main.py 2>>$log_file  # should remove  err log output in final release.
+        python $PWD/fastplanting_main.py >>$log_file 2>&1  # should remove  err log output in final release.
         echo "TWS service was exited at `date`" >> $log_file
     fi 
     sleep 10 

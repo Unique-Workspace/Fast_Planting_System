@@ -166,7 +166,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         QtCore.QObject.connect(self.table_plot_node, QtCore.SIGNAL(_fromUtf8("itemClicked(QTableWidgetItem*)")), self.refresh_plot)
         QtCore.QObject.connect(self.combo_plot_range, QtCore.SIGNAL(_fromUtf8("activated(int)")), self.redraw_plot_event)
         QtCore.QObject.connect(self.button_setup_time, QtCore.SIGNAL(_fromUtf8("clicked()")), self.setup_time)
-        QtCore.QObject.connect(self.menu_update_online, QtCore.SIGNAL(_fromUtf8("clicked()")), self.update_online)
+        QtCore.QObject.connect(self.menu_update_online, QtCore.SIGNAL(_fromUtf8("triggered()")), self.update_online)
 
         #self.listTableView.setModel(self.item_model)
         self.table_node_info.horizontalHeader().setDefaultSectionSize(90)
@@ -233,7 +233,15 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         update_cmd = 'cd /home/pi/Workspace/Fast_Planting_System/Raspi/FastPlanting && git pull'
         #output = os.popen(update_cmd)
         (status, output) = commands.getstatusoutput(update_cmd)
-        print status, output
+        if status == 0 and output == 'Already up-to-date.':
+            self.plainTextEdit.setText(u'已经是最新版本，无需更新。')
+        elif status == 0:
+            self.plainTextEdit.setText(u'在线更新成功！系统将自动重启，请稍等...')
+            os.popen('sudo reboot')
+        else:
+            self.plainTextEdit.setText(u'在线更新失败！')
+            print status, output
+
 
     def setup_time(self):
         time_dialog = TimeDialogFrame()
