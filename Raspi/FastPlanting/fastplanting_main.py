@@ -237,6 +237,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
             self.plainTextEdit.setText(u'已经是最新版本，无需更新。')
         elif status == 0:
             self.plainTextEdit.setText(u'在线更新成功！系统将自动重启，请稍等...')
+            os.popen('sudo reboot')
         else:
             self.plainTextEdit.setText(u'在线更新失败！')
             print status, output
