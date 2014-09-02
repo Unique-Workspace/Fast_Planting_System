@@ -47,7 +47,7 @@ class XbeeThread(QtCore.QThread):
             print 'stop do nothing.'
 
     def refresh_table_event(self):
-        if self.abort is True:
+        if not self.isRunning():
             print 'refresh_table_event() return'
             return
         for key in self.addr_dict_last.keys():
@@ -69,7 +69,7 @@ class XbeeThread(QtCore.QThread):
         #self.timer.start()
 
     def update_database_event(self):
-        if self.abort is True:
+        if not self.isRunning():
             print 'update_database_event() return'
             return
         if self.database is None:
@@ -92,6 +92,8 @@ class XbeeThread(QtCore.QThread):
                 self.database.do_write(dict_data)
                 if self.yeelink_count % 10 == 0:
                     self.update_yeelink_func(dict_data['node_temp'], dict_data['node_humi'])
+        else:
+            self.ui_mainwindow.scan_node()  # do scan if there is no node
 
     def update_yeelink_func(self, cur_t, cur_h):
         try:
@@ -100,14 +102,14 @@ class XbeeThread(QtCore.QThread):
                 '''}' --header "U-ApiKey:6640382536cf31808bb94e83fe4e8f4c" \
         http://api.yeelink.net/v1.0/device/4014/sensor/8028/datapoints'''
             #print yeelink_cmd_t
-            p= os.popen(yeelink_cmd_t, 'r')
+            p = os.popen(yeelink_cmd_t, 'r')
 
             yeelink_h_str = str(cur_h)
             yeelink_cmd_h = '''curl --request POST --data '{"value":''' + yeelink_h_str + \
                 '''}' --header "U-ApiKey:6640382536cf31808bb94e83fe4e8f4c" \
             http://api.yeelink.net/v1.0/device/4014/sensor/8031/datapoints'''
             #print yeelink_cmd_h
-            p= os.popen(yeelink_cmd_h, 'r')
+            p = os.popen(yeelink_cmd_h, 'r')
         except Exception, e:
             print '[Exception]'
             print e

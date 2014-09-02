@@ -154,6 +154,15 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         super(FastPlantingFrame, self).__init__()
 
         self.setupUi(self)
+        # 得到桌面控件
+        desktop = QtGui.QApplication.desktop()
+        # 得到屏幕可显示尺寸
+        rect = desktop.availableGeometry()
+        # 设置窗口尺寸
+        self.setGeometry(rect)
+        # 设置窗口标记（无边框|任务栏右键菜单）
+        self.setWindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowSystemMenuHint)
+        # 调用最大化显示
         self.showMaximized()
 
         QtCore.QObject.connect(self.button_open_serial, QtCore.SIGNAL(_fromUtf8("clicked()")), self.open_serial)
@@ -493,5 +502,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
     w = FastPlantingFrame()
+    # 设置窗口显示
     w.show()
+    # 应用程序事件循环
     sys.exit(app.exec_())
