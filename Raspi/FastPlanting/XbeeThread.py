@@ -22,13 +22,15 @@ class XbeeThread(QtCore.QThread):
         self.listrow = 0
         self.addr_dict_current = {}
         self.addr_dict_last = {}
+        self.database = None
+        self.yeelink_count = 0
+
         self.refresh_table_timer = QtCore.QTimer(self)
         self.refresh_table_timer.timeout.connect(self.refresh_table_event)
         self.db_timer = QtCore.QTimer(self)
         self.db_timer.timeout.connect(self.update_database_event)
-        self.database  = None
-        
-        self.yeelink_count = 0
+        self.refresh_table_timer.start(CLEAN_TIMER_DELAY)
+        self.db_timer.start(DB_TIMER_DELAY)
         print 'XbeeThread init.'
 
     def __del__(self):
@@ -45,6 +47,9 @@ class XbeeThread(QtCore.QThread):
             print 'stop do nothing.'
 
     def refresh_table_event(self):
+        if self.abort is True:
+            print 'refresh_table_event() return'
+            return
         for key in self.addr_dict_last.keys():
             #print 'last = ' + str(self.addr_dict_last)
             #print 'current = ' + str(self.addr_dict_current)
@@ -63,26 +68,10 @@ class XbeeThread(QtCore.QThread):
         #self.timer = threading.Timer(MONITOR_TIMER_DELAY, self.timer_func_refresh_table)
         #self.timer.start()
 
-    def update_yeelink_func(self, cur_t, cur_h):
-        try:
-            yeelink_t_str = str(cur_t)
-            yeelink_cmd_t = '''curl --request POST --data '{"value":''' + yeelink_t_str + \
-                '''}' --header "U-ApiKey:6640382536cf31808bb94e83fe4e8f4c" \
-        http://api.yeelink.net/v1.0/device/4014/sensor/8028/datapoints'''
-            #print yeelink_cmd_t
-            p= os.popen(yeelink_cmd_t, 'r')
-
-            yeelink_h_str = str(cur_h)
-            yeelink_cmd_h = '''curl --request POST --data '{"value":''' + yeelink_h_str + \
-                '''}' --header "U-ApiKey:6640382536cf31808bb94e83fe4e8f4c" \
-            http://api.yeelink.net/v1.0/device/4014/sensor/8031/datapoints'''
-            #print yeelink_cmd_h
-            p= os.popen(yeelink_cmd_h, 'r')
-        except Exception, e:  
-            print '[Exception]'
-            print e 
-            
     def update_database_event(self):
+        if self.abort is True:
+            print 'update_database_event() return'
+            return
         if self.database is None:
             self.database = RecordDb()
         current_row = self.ui_mainwindow.table_node_info.rowCount() 
@@ -102,7 +91,26 @@ class XbeeThread(QtCore.QThread):
                 dict_data['node_watertemp']  = float(item.text())
                 self.database.do_write(dict_data)
                 if self.yeelink_count % 10 == 0:
-                    self.update_yeelink_func(dict_data['node_temp'] , dict_data['node_humi'] )
+                    self.update_yeelink_func(dict_data['node_temp'], dict_data['node_humi'])
+
+    def update_yeelink_func(self, cur_t, cur_h):
+        try:
+            yeelink_t_str = str(cur_t)
+            yeelink_cmd_t = '''curl --request POST --data '{"value":''' + yeelink_t_str + \
+                '''}' --header "U-ApiKey:6640382536cf31808bb94e83fe4e8f4c" \
+        http://api.yeelink.net/v1.0/device/4014/sensor/8028/datapoints'''
+            #print yeelink_cmd_t
+            p= os.popen(yeelink_cmd_t, 'r')
+
+            yeelink_h_str = str(cur_h)
+            yeelink_cmd_h = '''curl --request POST --data '{"value":''' + yeelink_h_str + \
+                '''}' --header "U-ApiKey:6640382536cf31808bb94e83fe4e8f4c" \
+            http://api.yeelink.net/v1.0/device/4014/sensor/8031/datapoints'''
+            #print yeelink_cmd_h
+            p= os.popen(yeelink_cmd_h, 'r')
+        except Exception, e:
+            print '[Exception]'
+            print e
 
     def update_table_nodeinfo(self, data, text):
         #print data, text
@@ -264,8 +272,6 @@ class XbeeThread(QtCore.QThread):
             print e
 
     def run(self):
-        self.refresh_table_timer.start(CLEAN_TIMER_DELAY)
-        self.db_timer.start(DB_TIMER_DELAY)
         while not self.abort:
             #print 'xbee thread run.'
             try:
