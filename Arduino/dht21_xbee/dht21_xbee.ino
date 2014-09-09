@@ -13,7 +13,6 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
-
 /* PIN DEFINE BEGIN */
 #define DHT11_PIN 2  //put the sensor in the digital pin 2
 #define HUMI_CTRL_PIN 3  // for humidifier on/off control
@@ -43,6 +42,8 @@ static float temp_water_max;
 static float humi_min;
 static float humi_max;
 static int   led_ctrl;
+static boolean humidifier_on = false;
+static boolean water_heat_on = false;
   
 static dht DHT;
 /* DATA AREA END */
@@ -89,10 +90,11 @@ static struct pt pt_send, pt_receive;
 void humidity_func(double humidity)
 {
   //humidity conditions
-  if(humidity <= humi_min)
+  if(humidity <= humi_min && !water_heat_on)
   {
     mySerial.println("\t humidity increase");
     digitalWrite(HUMI_CTRL_PIN, HIGH);    // trun on humidifier
+    humidifier_on = true;
     humi_delay = 0;
   }
   else if(humidity > humi_min && humidity < humi_max)
@@ -100,6 +102,7 @@ void humidity_func(double humidity)
     // increase
     mySerial.println("\t humidity increase");
     digitalWrite(HUMI_CTRL_PIN, HIGH);    // trun on humidifier
+    humidifier_on = true;
     humi_delay = 0;
   }
   else if(humidity >= humi_max)
@@ -110,8 +113,8 @@ void humidity_func(double humidity)
     {
       mySerial.println("\t TURN OFF humidity.");
       digitalWrite(HUMI_CTRL_PIN, LOW); 
+      humidifier_on = false;
       humi_delay = 0;
-
     }
     else
     {
@@ -154,21 +157,25 @@ void temperature_func(double temperature)
 void water_func(double water_temperature)
 {
   //temperature conditions
-  if(water_temperature < temp_water_min)
+  if(water_temperature < temp_water_min && water_temperature > -10 && !humidifier_on)
   {
     // increase
     digitalWrite(WATER_CTRL_PIN, HIGH); 
+    water_heat_on = true;
     mySerial.println("\t water_temperature increase");
   }
   else if(water_temperature >= temp_water_min && water_temperature < temp_water_max)
   {
     // ok
+    digitalWrite(WATER_CTRL_PIN, LOW);    // stop heat
+    water_heat_on = false;
     mySerial.println("\t water_temperature ok");
   }
   else if(water_temperature >= temp_water_max)
   {
     //decrease
     digitalWrite(WATER_CTRL_PIN, LOW); 
+    water_heat_on = false;
     mySerial.println("\t water_temperature decrease");
   }
   else
