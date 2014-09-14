@@ -94,6 +94,12 @@ class ComboxDelegate(QtGui.QItemDelegate):
 
 
 class TimeDialogFrame(QtGui.QDialog, Ui_ConfigDialog):
+    """
+        Describe: Time change dialog.
+        Args:
+        Return: none
+        Raises: none
+    """
     def __init__(self):
         super(TimeDialogFrame, self).__init__()
 
@@ -123,6 +129,12 @@ class TimeDialogFrame(QtGui.QDialog, Ui_ConfigDialog):
 
 
 class SerialDialogFrame(QtGui.QDialog, Ui_SerialDialog):
+    """
+        Describe: Serial config dialog.
+        Args:
+        Return: none
+        Raises: none
+    """
     def __init__(self, serial_port=None, baund_rate=None):
         super(SerialDialogFrame, self).__init__()
 
@@ -149,7 +161,10 @@ class SerialDialogFrame(QtGui.QDialog, Ui_SerialDialog):
 
 
 class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
+    """ 主窗体程序，起始入口
+        负责初始化窗体资源，启动xbeethread线程，界面逻辑控制，plot绘图逻辑。
 
+    """
     def __init__(self):
         super(FastPlantingFrame, self).__init__()
 
@@ -177,7 +192,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         QtCore.QObject.connect(self.button_setup_time, QtCore.SIGNAL(_fromUtf8("clicked()")), self.setup_time)
         QtCore.QObject.connect(self.menu_update_online, QtCore.SIGNAL(_fromUtf8("triggered()")), self.update_online)
 
-        #self.listTableView.setModel(self.item_model)
+        # 初始化节点实时显示条目
         self.table_node_info.horizontalHeader().setDefaultSectionSize(90)
         self.table_node_info.setColumnCount(6)
         self.table_node_info.setHorizontalHeaderLabels((u"物理地址", u"网络地址", u"室温", u"湿度", u"水温", u"LED"))
@@ -185,6 +200,7 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         for i in range(1, 6):
             self.table_node_info.horizontalHeader().setResizeMode(i, QtGui.QHeaderView.Stretch)
 
+        # 初始化节点配置条目
         for index in range(2, 8):
             self.table_range_display.setItemDelegateForColumn(index, SpinBoxDelegate(self))
         self.table_range_display.setItemDelegateForColumn(8, ComboxDelegate(self))
@@ -196,23 +212,27 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         for i in range(1, 9):
             self.table_range_display.horizontalHeader().setResizeMode(i, QtGui.QHeaderView.Stretch)
 
+        # 初始化曲线图显示中的节点条目
         self.table_plot_node.horizontalHeader().setDefaultSectionSize(90)
         self.table_plot_node.setColumnCount(1)
         self.table_plot_node.setHorizontalHeaderLabels((u"物理地址",))
         self.table_plot_node.horizontalHeader().setResizeMode(0, QtGui.QHeaderView.Stretch)
 
+        # 实例化曲线图类，传入参数为qwt图表实例、当前显示时间范围下标
         self.qwt_plot = plot_display.PlotDisplay(self.qwtPlot, self.combo_plot_range.currentIndex())
-        self.selected_plot_node = {}
+        self.selected_plot_node = {}        # 用于保存当前选中条目的行号和地址字符串（唯一标识）
         self.selected_plot_node['row'] = -1    # default value
         self.selected_plot_node['text'] = ''
         
-        self.selected_combo_range = 0
+        self.selected_combo_range = 0   # 用于保存当前选中的显示时间范围
 
+        # 界面时钟
         self.show_clock_time()
         clock_timer = QtCore.QTimer(self)
         clock_timer.timeout.connect(self.show_clock_time)
         clock_timer.start(1000)
 
+        # 曲线图定时器，用来更新曲线
         self.plot_timer = QtCore.QTimer(self)
         self.plot_timer.timeout.connect(self.plot_timer_event)
 
@@ -223,9 +243,11 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         # Create API object, which spawns a new thread
         self.xbee = ZigBee(self.serial)
 
+        # Xbee信令接收发送线程，传入参数：串口实例，xbee实例
         self.xbee_thread = XbeeThread(self.serial, self.xbee, self)
         self.xbee_thread.xbee_thread_start()
-        
+
+        # 打开串口
         self.open_serial()
         print 'FastPlantingFrame init.'
 
@@ -254,6 +276,12 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
 
 
     def setup_time(self):
+        """
+        Describe: setup the system time, connect with the button.
+        Args: none
+        Return: none
+        Raises: none
+        """
         time_dialog = TimeDialogFrame()
         ret = time_dialog.exec_()
         if ret == 1:
@@ -268,6 +296,12 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
             print 'discard config.'
 
     def redraw_plot_event(self, selected_index):
+        """
+        Describe: select the time range to call this function.
+        Args: selected_index -- time range index
+        Return: none
+        Raises: none
+        """
         if selected_index == self.selected_combo_range:
             print 'redraw_plot return 0.'
             return 0
@@ -276,6 +310,12 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
     
     # 每一次重置显示范围，都要从数据库中读取对应数据，进行解析，不要使用PlotDisplay类中的本地数据。
     def redraw_plot(self, selected_index):
+        """
+        Describe: Redraw the plot curve with selected time range.
+        Args: selected time range index
+        Return: none
+        Raises: none
+        """
         if self.plot_timer.isActive():
             self.plot_timer.stop()
         time_limit = plot_display.PlotDisplay.get_plot_time_limit(selected_index)
@@ -286,6 +326,12 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
     # 用户点击节点地址条目，触发此函数进行对应条目的数据显示。
     # 应当从数据库中读取数据进行显示。
     def refresh_plot(self, selected_item):
+        """
+        Describe: select the item node to call this function.
+        Args: selected_item -- item node index
+        Return: none
+        Raises: none
+        """
         new_selected_row = selected_item.row()
         if new_selected_row != self.selected_plot_node['row']:
             self.selected_plot_node['row'] = new_selected_row
@@ -307,6 +353,12 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
 
     # For the QwtPlot display
     def plot_timer_event(self):
+        """
+        Describe: This is a timer for plot refresh display. This function manipulate the plot_display class instance.
+        Args: none
+        Return: none
+        Raises: none
+        """
         # 此处应该载入从数据库读出的历史数据，以列表形式传递给 self.qwt_plot.update_plot 进行刷新。
         # 然后再往下执行，加上当前数据更新。
         if 'text' in self.selected_plot_node.keys() and self.selected_plot_node['text'] == ''and \
@@ -337,7 +389,6 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
             sensor_data[plot_display.HUMIDITY] = float(humidity)
             sensor_data[plot_display.TWATER] = float(temp_water)
             self.qwt_plot.update_plot(sensor_data)
-
         elif self.table_node_info.rowCount() <= 0:  # 列表空，则清除plot
             print 'plot_timer_event - clean ' + self.selected_plot_node['text']
             self.qwt_plot.clean_plot()
@@ -357,6 +408,12 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
         self.lcdNumber_date.display(text)
 
     def scan_node(self):
+        """
+        Describe: send the broadcast frame to detect the xbee client. connect with the button.
+        Args: none
+        Return: none
+        Raises: none
+        """
         print 'scan_node.'
         if self.serial.isOpen():
             self.xbee.send('tx', frame_id='S', dest_addr_long=BROADCAST_ADDR_LONG, dest_addr=BROADCAST_ADDR_SHORT, data='scan')
@@ -364,6 +421,12 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
             self.plainTextEdit.setText(u'未连接串口！')
 
     def config_serial(self):
+        """
+        Describe: open serial config dialog, save the port num and baundrate. connect with the button.
+        Args: none
+        Return: none
+        Raises: none
+        """
         print 'serial config.'
         serial_dialog = SerialDialogFrame(self.serial_port, self.serial_baundrate)
         ret = serial_dialog.exec_()
@@ -374,6 +437,12 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
             print 'discard config.'
 
     def open_serial(self):
+        """
+        Describe: open the serial comm, with port num and baundrate. connect with the button.
+        Args: none
+        Return: none
+        Raises: COMM open error
+        """
         if not self.serial.isOpen():
             try:
                 print self.serial_port, self.serial_baundrate
@@ -392,6 +461,12 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
             self.button_open_serial.setText(u"连接")
 
     def send_config(self):
+        """
+        Describe: send the node config to xbee device. connect with the button.
+        Args: none
+        Return: none
+        Raises: none
+        """
         # item_checkbox.setCheckState(QtCore.Qt.Checked)
         for row in range(0, self.table_range_display.rowCount()):
             item = self.table_range_display.item(row, 0)
@@ -456,6 +531,13 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
                 self.send_config_func(addr_long_short, send_data)
 
     def send_config_func(self, addr_long_short, send_data):
+        """
+        Describe: send the node config to xbee device.
+        Args: addr_long_short -- keep the long and short addr of the destination node.
+              send_data -- config data will be transfered.
+        Return: none
+        Raises: xbee transfer error
+        """
         try:
             for addr in addr_long_short:
                 addr_long = str(addr[0]).decode('hex')
@@ -478,6 +560,12 @@ class FastPlantingFrame(QtGui.QMainWindow, Ui_MainWindow):
                 print '[Error]set_config() Transfer Fail!!', e
 
     def save_config(self):
+        """
+        Describe: save the node config to .config file.
+        Args: none
+        Return: none
+        Raises: none
+        """
         config = ConfigProcess()
         config.load_config()
         for row in range(0, self.table_range_display.rowCount()):

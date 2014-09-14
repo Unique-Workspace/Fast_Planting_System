@@ -47,12 +47,18 @@ class XbeeThread(QtCore.QThread):
             print 'stop do nothing.'
 
     def refresh_table_event(self):
+        """
+        Describe: Monitor the node tables to clean.
+        Args: none
+        Return: none
+        Raises: none
+        """
         if not self.isRunning():
             print 'refresh_table_event() return'
             return
         for key in self.addr_dict_last.keys():
-            #print 'last = ' + str(self.addr_dict_last)
-            #print 'current = ' + str(self.addr_dict_current)
+            # 10s轮询一次，比较节点计数器，如果值一样，说明在这10s内节点无更新，则删除界面节点显示。
+            # 节点计数器会在每次更新节点时自增1
             if self.addr_dict_last[key] == self.addr_dict_current[key]:
                 for item in self.ui_mainwindow.table_node_info.findItems(key, QtCore.Qt.MatchFixedString):
                     #print 'need to delete row=' + str(item.row()) + '  ' + key + '=' + str(self.addr_dict_current[key])
@@ -69,6 +75,12 @@ class XbeeThread(QtCore.QThread):
         #self.timer.start()
 
     def update_database_event(self):
+        """
+        Describe: Update the node info to database.
+        Args: none
+        Return: none
+        Raises: none
+        """
         if not self.isRunning():
             print 'update_database_event() return'
             return
@@ -84,11 +96,11 @@ class XbeeThread(QtCore.QThread):
                 item = self.ui_mainwindow.table_node_info.item(row, 0)
                 dict_data['node_id'] = str(item.text())
                 item = self.ui_mainwindow.table_node_info.item(row, 2)  # 室内温度
-                dict_data['node_temp']  = float(item.text())
+                dict_data['node_temp'] = float(item.text())
                 item = self.ui_mainwindow.table_node_info.item(row, 3)  # 湿度
-                dict_data['node_humi']  = float(item.text())
+                dict_data['node_humi'] = float(item.text())
                 item = self.ui_mainwindow.table_node_info.item(row, 4)  # 水温
-                dict_data['node_watertemp']  = float(item.text())
+                dict_data['node_watertemp'] = float(item.text())
                 self.database.do_write(dict_data)
                 if self.yeelink_count % 10 == 0:
                     self.update_yeelink_func(dict_data['node_temp'], dict_data['node_humi'])
@@ -115,6 +127,13 @@ class XbeeThread(QtCore.QThread):
             print e
 
     def update_table_nodeinfo(self, data, text):
+        """
+        Describe: Update node display and setting and plot node informations.
+        Args: data -- (addr_long, addr_short)
+              text -- node info: humidity, temperature, led status.
+        Return: none
+        Raises: none
+        """
         #print data, text
         addr_long = data[0]
         addr_short = data[1]
@@ -151,7 +170,7 @@ class XbeeThread(QtCore.QThread):
             self.ui_mainwindow.table_node_info.setItem(item.row(), 3, item_humidity)
             self.ui_mainwindow.table_node_info.setItem(item.row(), 4, item_temperature_water)
             self.ui_mainwindow.table_node_info.setItem(item.row(), 5, item_led)
-            self.addr_dict_current[addr_long] += 1
+            self.addr_dict_current[addr_long] += 1  # 节点计数器自增1
             break
         else:
             #print 'else'
@@ -261,6 +280,12 @@ class XbeeThread(QtCore.QThread):
             self.ui_mainwindow.table_plot_node.setItem(row, 0, item_plot_addr_long)
 
     def message_received(self, data):
+        """
+        Describe: called from thread, handle the node data, update the node info in node table.
+        Args: none
+        Return: none
+        Raises: none
+        """
         try:
             src_addr_long = data['source_addr_long']
             src_addr_short = data['source_addr']
@@ -274,6 +299,12 @@ class XbeeThread(QtCore.QThread):
             print e
 
     def run(self):
+        """
+        Describe: thread running, waiting the serial data for analysis.
+        Args: none
+        Return: none
+        Raises: none
+        """
         while not self.abort:
             #print 'xbee thread run.'
             try:

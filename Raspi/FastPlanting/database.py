@@ -69,10 +69,10 @@ class SlaveNode:
 class RecordDb(SlaveNode):
     def __init__(self):
         try:
-            self.patch = "RecordDB.db"
+            self.path = "RecordDB.db"
             self.table = "Record"
-            SlaveNode.__init__(self)
-            self.connect = sqlite3.connect(self.patch)
+            SlaveNode.__init__(self)    # parent class, to do the internal database operation.
+            self.connect = sqlite3.connect(self.path)
             self.cursor = self.connect.cursor()
             self.cursor.execute("select * from sqlite_master where tbl_name = '%s'" % self.table)
             self.data_row = self.cursor.fetchone()
@@ -130,6 +130,13 @@ class RecordDb(SlaveNode):
         return ret_dict
 
     def curve_data_read(self, node_id="", start_time="", end_time=""):
+        """
+        Describe: Read the curve data from DB, as the time range.
+        Args: node_id -- long address as the node id.
+              start_time/end_time -- time range.
+        Return: data list, sorted as time axis.
+        Raises: none
+        """
         if node_id == "":
             print("Node_Id is NULL")
             return 0
@@ -154,6 +161,12 @@ class RecordDb(SlaveNode):
         self.connect.commit()
 
     def do_write(self, input_dict):
+        """
+        Describe: Write the dict_data into DB.
+        Args: input_dict -- DB data.
+        Return: none.
+        Raises: none
+        """
         self.data_write(input_dict)
 
     def lock_action(self):

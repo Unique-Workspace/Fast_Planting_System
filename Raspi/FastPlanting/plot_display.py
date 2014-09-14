@@ -46,6 +46,7 @@ class TimeScaleDraw(Qwt.QwtScaleDraw):
 # class TimeScaleDraw
 
 
+# 曲线背景色渐变
 class Background(Qwt.QwtPlotItem):
 
     def __init__(self):
@@ -73,6 +74,7 @@ class Background(Qwt.QwtPlotItem):
 
 
 # reload class QwtPlotPicker for time scale display.
+# 重载PlotPickerByTime，鼠标滑动坐标点显示
 class PlotPickerByTime(Qwt.QwtPlotPicker):
     def __init__(self,  *args):
         Qwt.QwtPlotPicker.__init__(self, *args)
@@ -97,12 +99,12 @@ class PlotDisplay(Qwt.QwtPlot):
         super(PlotDisplay, self).__init__()
 
         self.curves = {}
-        self.curve_data = {}
-        self.time_data = []
-        self.time_limit = self.get_plot_time_limit(time_limit_index)
-        self.base_msec = 0
-        self.current_msec = QtCore.QDateTime.currentMSecsSinceEpoch()
-        self.selected_plot_node = {}
+        self.curve_data = {}    # 字典存储曲线数据值，分为室温、水温、湿度三条曲线
+        self.time_data = []     # 存储时间坐标，单位：秒
+        self.time_limit = self.get_plot_time_limit(time_limit_index)    # 存储用户选择时限的秒数
+        self.base_msec = 0      # 存储基准时间，即曲线起始时间
+        self.current_msec = QtCore.QDateTime.currentMSecsSinceEpoch()   # 存储当前时间
+        self.selected_plot_node = {}    # 选中节点，显示其曲线图
         self.start_time = 0
         # alias
         font = self.fontInfo().family()
@@ -212,6 +214,12 @@ class PlotDisplay(Qwt.QwtPlot):
     # selected()
     
     def update_plot(self, sensor_data):
+        """
+        Describe: 更新节点的曲线图
+        Args: sensor_data -- 传感器数据，字典
+        Return: none
+        Raises: none
+        """
         if self.first_update_flag:
             date_time = QtCore.QDateTime.currentDateTime()
             global global_plot_time_base
@@ -239,7 +247,7 @@ class PlotDisplay(Qwt.QwtPlot):
 
         print len(self.time_data), self.time_data[0], self.time_data[-1]
         print QtCore.QDateTime.currentDateTime()
-        #print self.time_data
+        # 设置下标范围
         self.setAxisScale(
                 Qwt.QwtPlot.xBottom, self.time_data[0], self.time_data[-1])
         for key in self.curves.keys():
@@ -248,6 +256,12 @@ class PlotDisplay(Qwt.QwtPlot):
 
     @staticmethod
     def calculate_time_range(time_limit):
+        """
+        Describe: Caculate the time range from selected index to actual time range(start to end as time string)
+        Args: time_limit -- selected time range index
+        Return: dict time_range{['end'], ['start']}
+        Raises: none
+        """
         time_range = {}
         end = QtCore.QDateTime.currentDateTime()
         start = end.addSecs(-time_limit)
@@ -257,8 +271,13 @@ class PlotDisplay(Qwt.QwtPlot):
         global_plot_time_base = start
         return time_range
 
-    # 测试指定时间范围内有没有节点信息
     def test_node_db_info(self, time_limit):
+        """
+        Describe: 测试指定时间范围内有没有节点信息
+        Args: time_limit -- selected time range index
+        Return: len(node_data) -- 节点数据长度（个数）
+        Raises: none
+        """
         database = RecordDb()
         if time_limit == ALL_TIME_STATIC:
             node_data = database.curve_data_read(self.selected_plot_node['text'])
@@ -268,8 +287,13 @@ class PlotDisplay(Qwt.QwtPlot):
         database.do_close()
         return len(node_data)
 
-    # 从数据库读取节点信息，读完关闭
     def read_node_db_info(self, time_limit):
+        """
+        Describe: 从数据库读取节点信息，赋值给曲线数据（curve_data和time_data）
+        Args: time_limit -- selected time range index
+        Return: start time, QtCore.QDateTime type.
+        Raises: none
+        """
         if 'text' not in self.selected_plot_node.keys():
             print '[Warning] Not select the node.'
             return -1
@@ -296,7 +320,7 @@ class PlotDisplay(Qwt.QwtPlot):
             self.start_time = QtCore.QDateTime.fromString(time_range['start'], TIME_FORMAT)  # all range of time.
         start_sec = self.start_time.toMSecsSinceEpoch() / 1000.0
         if self.base_msec == 0:
-            self.base_msec = self.start_time.toMSecsSinceEpoch()
+            self.base_msec = self.start_time.toMSecsSinceEpoch()    # 更新基准时间
         for time in times:
             time = QtCore.QDateTime.fromString(time, TIME_FORMAT)
             current_sec = time.toMSecsSinceEpoch() / 1000.0
@@ -307,8 +331,13 @@ class PlotDisplay(Qwt.QwtPlot):
         #print self.time_data[0], self.time_data[-1], len(self.time_data)
         #print (self.time_data[-1] - self.time_data[0]) / 3600/24
 
-    # 绘制time_limit时限的静态图表
     def draw_time_limit_plot(self, time_limit):
+        """
+        Describe: 绘制time_limit时限的静态图表
+        Args: time_limit -- selected time range index
+        Return: none
+        Raises: none
+        """
         start_time = self.read_node_db_info(time_limit)
         if start_time == -1:
             print 'draw_time_limit_plot() ret -1'
@@ -329,16 +358,27 @@ class PlotDisplay(Qwt.QwtPlot):
 
     # 根据选择的时限，重绘曲线。
     def redraw_plot(self, time_sec_limit):
-        # 重绘time_limit期间的曲线：
-        # 1、清空curve_data数据
-        # 2、从数据库读取time_limit期间的数据，并存入curve_data
-        # 3、重绘图表，完成。交给plot_timer_event在此基础上继续刷新。
+        """
+        Describe: 重绘time_limit期间的曲线：
+          1、清空curve_data数据
+          2、从数据库读取time_limit期间的数据，并存入curve_data
+          3、重绘图表，完成。交给plot_timer_event在此基础上继续刷新。
+        Args: time_sec_limit -- selected time range index(0~7).
+        Return: none
+        Raises: none
+        """
+        #
         #print time_sec_limit
         self.time_limit = time_sec_limit
         self.draw_time_limit_plot(time_sec_limit)
 
     def clean_plot(self):
-        # 清空所有本地数据
+        """
+        Describe: 清空所有本地数据
+        Args: none
+        Return: none
+        Raises: none
+        """
         for key in self.curve_data.keys():
             self.curve_data[key] = []
         self.time_data = []
